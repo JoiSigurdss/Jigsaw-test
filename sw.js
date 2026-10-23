@@ -1,5 +1,5 @@
 // Change this when you publish an update, so old files get cleared out.
-const CACHE = 'jigsaw-v3';
+const CACHE = 'jigsaw-v4';
 
 const FILES = [
   './',
