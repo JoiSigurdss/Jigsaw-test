@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jigsaw prototype</title>
+<title>Jigsaw</title>
 <meta name="theme-color" content="#6E4B32">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
@@ -33,71 +33,53 @@
   --ink:#FBF3E4; --chip:#E3D3B4; --chip-ink:#2E2116; color-scheme: dark;
 }
 *,*::before,*::after{box-sizing:inherit}
-html,body{height:100%;margin:0}
+html,body{height:100%; margin:0}
 body{
   background:var(--felt); color:var(--ink);
   font-family:'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   display:flex; flex-direction:column; overflow:hidden;
 }
-header,#dock{background:var(--wood); display:flex; gap:8px; align-items:center; padding:8px 10px}
-header{flex-wrap:wrap}
+header{background:var(--wood); display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 10px}
 button,.btn{
   min-height:48px; padding:0 16px; border:0; border-radius:12px;
   background:var(--wood-hi); color:var(--ink); font:inherit; font-size:18px;
-  display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
 }
 button:focus-visible,.btn:focus-within{outline:3px solid var(--glow); outline-offset:2px}
 button[aria-pressed="true"]{background:var(--chip); color:var(--chip-ink); font-weight:700}
 .seg{display:flex; gap:4px}
 #openSettings{margin-left:auto}
-body[data-mode="puzzle"] .sort-only, body[data-mode="sort"] .puzzle-only{display:none}
+body[data-mode="puzzle"] .sort-only, body[data-mode="sort"] .puzzle-only{display:none !important}
 
-#stage{position:relative; flex:1; overflow:hidden; touch-action:none; user-select:none; -webkit-user-select:none}
-#frame{position:absolute; background:var(--felt-deep); border-radius:3px; box-shadow:inset 0 2px 10px rgba(0,0,0,.4)}
-#ghost{position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity .3s}
-#frame.peek #ghost{opacity:.3}
-#tray{position:absolute; border-radius:14px; background:rgba(0,0,0,.12)}
-body[data-mode="sort"] #frame, body[data-mode="sort"] #tray, body[data-mode="sort"] #done{display:none}
-#empty{position:absolute; display:none; padding:16px; font-size:18px; text-align:center; opacity:.85; line-height:1.4}
+#stage{position:relative; flex:1; overflow:hidden}
+#view{position:absolute; left:0; top:0; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none}
+#zoom{position:absolute; right:10px; top:10px; display:flex; flex-direction:column; gap:6px}
+#zoom button{width:52px; padding:0; font-size:24px; font-weight:700; box-shadow:0 2px 8px rgba(0,0,0,.35)}
+#zoom #zFit{font-size:15px}
+#empty{position:absolute; left:16px; right:16px; top:40%; text-align:center; font-size:19px; opacity:.85; display:none; pointer-events:none}
 #empty.show{display:block}
+#toast{
+  position:absolute; left:50%; top:12px; transform:translateX(-50%);
+  background:var(--wood); padding:10px 16px; border-radius:12px; font-size:17px;
+  box-shadow:0 4px 14px rgba(0,0,0,.35); opacity:0; transition:opacity .25s; pointer-events:none; max-width:90%; text-align:center;
+}
+#toast.show{opacity:1}
+#done{position:absolute; inset:0; display:none; align-items:flex-end; justify-content:center; padding:24px; pointer-events:none}
+#done.show{display:flex}
+#done div{pointer-events:auto; background:var(--wood); border-radius:16px; padding:16px 20px; display:flex; gap:16px; align-items:center; font-size:22px; font-weight:700; box-shadow:0 6px 20px rgba(0,0,0,.4)}
 
-.group{
-  position:absolute; left:0; top:0; width:0; height:0; transform-origin:0 0;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.45)) drop-shadow(0 0 0 rgba(242,193,78,0));
-}
-.group.lifted{filter:drop-shadow(0 8px 10px rgba(0,0,0,.4)) drop-shadow(0 0 0 rgba(242,193,78,0))}
-.group.placed{filter:drop-shadow(0 0 0 rgba(0,0,0,0)) drop-shadow(0 0 0 rgba(242,193,78,0))}
-.group.sel{filter:drop-shadow(0 0 3px #F2C14E) drop-shadow(0 0 3px #F2C14E) drop-shadow(0 2px 3px rgba(0,0,0,.45))}
-.group.join{animation:glow .7s ease-out}
-.group.placed.join{animation:glowPlaced .9s ease-out}
-@keyframes glow{
-  0%  {filter:drop-shadow(0 2px 3px rgba(0,0,0,.45)) drop-shadow(0 0 12px rgba(242,193,78,1))}
-  100%{filter:drop-shadow(0 2px 3px rgba(0,0,0,.45)) drop-shadow(0 0 0 rgba(242,193,78,0))}
-}
-@keyframes glowPlaced{
-  0%  {filter:drop-shadow(0 0 0 rgba(0,0,0,0)) drop-shadow(0 0 14px rgba(242,193,78,1))}
-  100%{filter:drop-shadow(0 0 0 rgba(0,0,0,0)) drop-shadow(0 0 0 rgba(242,193,78,0))}
-}
-canvas.piece{position:absolute; left:0; top:0}
-
-/* The pile shelf: real stacks of pieces at the edge of the table. */
+/* The pile shelf */
 #dock{
   background:var(--felt-deep); box-shadow:inset 0 8px 10px -8px rgba(0,0,0,.55);
-  overflow-x:auto; white-space:nowrap; padding:4px 8px; gap:2px; align-items:flex-end;
+  display:flex; gap:2px; align-items:flex-end; overflow-x:auto; white-space:nowrap; padding:4px 8px;
 }
 #dockLabel{font-size:15px; opacity:.9; flex:none; align-self:center; white-space:normal; max-width:7em; line-height:1.2}
 #dockLabel[hidden]{display:none}
 #chips{display:flex; gap:2px; flex:none; align-items:flex-end}
-.heap{
-  background:transparent; flex-direction:column; gap:2px; padding:2px 6px 4px;
-  min-height:0; border-radius:14px; flex:none; transition:transform .15s, background .15s;
-}
-.heap .tag{
-  font-size:14px; display:inline-flex; align-items:center; gap:6px;
-  padding:2px 8px; border-radius:10px; background:rgba(0,0,0,.25);
-}
+.heap{background:transparent; flex-direction:column; gap:2px; padding:2px 6px 4px; min-height:0; border-radius:14px; flex:none; transition:transform .15s, background .15s}
+.heap .tag{font-size:14px; display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:10px; background:rgba(0,0,0,.25)}
 .heap .tag i{width:10px; height:10px; border-radius:50%; flex:none}
-.heap .tag b{opacity:.75}
+.heap .tag b{opacity:.8}
 .heap[aria-pressed="true"]{background:transparent; color:var(--ink); font-weight:400}
 .heap[aria-pressed="true"] .tag{background:var(--chip); color:var(--chip-ink); font-weight:700}
 .heap[aria-pressed="true"] canvas{filter:drop-shadow(0 0 5px var(--glow))}
@@ -105,14 +87,7 @@ canvas.piece{position:absolute; left:0; top:0}
 .heap.pulse{animation:pulse .45s ease-out}
 @keyframes pulse{0%{transform:scale(1.12)}100%{transform:scale(1)}}
 
-#done{position:absolute; inset:0; display:none; align-items:flex-end; justify-content:center; padding:24px; pointer-events:none; z-index:1000000}
-#done.show{display:flex}
-#done div{pointer-events:auto; background:var(--wood); border-radius:16px; padding:16px 20px; display:flex; gap:16px; align-items:center; font-size:22px; font-weight:700; box-shadow:0 6px 20px rgba(0,0,0,.4)}
-
-dialog{
-  border:0; border-radius:18px; padding:0; width:min(520px, calc(100% - 24px)); max-height:85vh;
-  background:var(--wood); color:var(--ink); box-shadow:0 10px 40px rgba(0,0,0,.5);
-}
+dialog{border:0; border-radius:18px; padding:0; width:min(520px, calc(100% - 24px)); max-height:85vh; background:var(--wood); color:var(--ink); box-shadow:0 10px 40px rgba(0,0,0,.5)}
 dialog::backdrop{background:rgba(0,0,0,.45)}
 .sheet{padding:18px 20px 20px; overflow:auto; max-height:85vh}
 .sheet h2{margin:0 0 8px; font-size:24px}
@@ -125,10 +100,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .toggles,.row,.sizes{display:flex; flex-wrap:wrap; gap:6px}
 .row{margin-top:20px; justify-content:space-between}
 input[type=file]{position:absolute; opacity:0; width:1px; height:1px}
-@media (prefers-reduced-motion: reduce){
-  #ghost{transition:none}
-  .group.join,.group.placed.join,.heap.pulse{animation:none}
-}
+@media (prefers-reduced-motion: reduce){ .heap.pulse{animation:none} #toast{transition:none} }
 </style>
 </head>
 <body data-mode="puzzle">
@@ -140,17 +112,22 @@ input[type=file]{position:absolute; opacity:0; width:1px; height:1px}
   <button id="peek" class="puzzle-only" aria-pressed="false">Peek</button>
   <button id="selEdges" class="sort-only">Select edges</button>
   <button id="selNone" class="sort-only">Clear</button>
-  <button id="mix">Mix</button>
+  <button id="mix" class="sort-only">Mix</button>
   <button id="openSettings">Settings</button>
 </header>
 <main id="stage">
-  <div id="tray"></div>
-  <div id="frame"><canvas id="ghost"></canvas></div>
-  <div id="empty"></div>
+  <canvas id="view"></canvas>
+  <div id="zoom" class="puzzle-only">
+    <button id="zIn" aria-label="Zoom in">+</button>
+    <button id="zOut" aria-label="Zoom out">−</button>
+    <button id="zFit" aria-label="Show the whole table">All</button>
+  </div>
+  <div id="empty">No loose pieces here.</div>
+  <div id="toast" role="status"></div>
   <div id="done"><div><span>You finished it!</span><button id="again">Play again</button></div></div>
 </main>
 <nav id="dock" aria-label="Piles">
-  <span id="dockLabel"></span>
+  <span id="dockLabel" hidden></span>
   <div id="chips"></div>
 </nav>
 
@@ -158,30 +135,43 @@ input[type=file]{position:absolute; opacity:0; width:1px; height:1px}
   <div class="sheet">
     <h2>Settings</h2>
     <h3>New puzzle</h3>
-    <div class="sizes" role="group" aria-label="Number of pieces">
+    <p id="info"></p>
+    <div class="sizes">
       <label class="btn">Choose photo<input id="file" type="file" accept="image/*"></label>
-      <button data-n="12">12</button>
-      <button data-n="24" aria-pressed="true">24</button>
+      <button id="sample">Sample picture</button>
+    </div>
+    <p>Pieces:</p>
+    <div class="sizes" id="counts" role="group" aria-label="Number of pieces">
+      <button data-n="24">24</button>
       <button data-n="48">48</button>
       <button data-n="100">100</button>
+      <button data-n="200">200</button>
+      <button data-n="400">400</button>
     </div>
-    <p id="info"></p>
     <h3>Snapping and shape</h3>
     <div id="sliders"></div>
-    <h3>Feedback</h3>
+    <h3>Feedback and graphics</h3>
     <div class="toggles" id="toggles"></div>
     <div class="row">
-      <button id="reset">Reset to defaults</button>
+      <button id="reset">Reset settings</button>
       <button id="closeSettings" aria-pressed="true">Done</button>
     </div>
   </div>
 </dialog>
 
 <script>
-/* ---------- Settings ---------- */
+'use strict';
+const $ = id => document.getElementById(id);
 
-const DEFAULTS = { snapFrame: 30, snapJoin: 30, tab: 26, board: 58, sortZoom: 1.6,
-  sound: true, vibrate: true, glow: true, outline: false };
+/* =====================================================================
+   1. Settings
+   ===================================================================== */
+
+const DEFAULTS = {
+  snapFrame: 30, snapJoin: 30, tab: 26, cap: 100, sortSize: 72,
+  sound: true, vibrate: true, glow: true, outline: false,
+  sharp: !(navigator.deviceMemory && navigator.deviceMemory <= 4),
+};
 let S = loadSettings();
 function loadSettings(){
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem('jigsaw-settings') || '{}') }; }
@@ -192,43 +182,56 @@ function saveSettings(){ try { localStorage.setItem('jigsaw-settings', JSON.stri
 const SLIDERS = [
   { k: 'snapFrame', label: 'Snap to the frame', min: 10, max: 60, step: 5, fmt: v => v + '% of a piece' },
   { k: 'snapJoin',  label: 'Snap to other pieces', min: 10, max: 60, step: 5, fmt: v => v + '% of a piece' },
-  { k: 'tab',       label: 'Tab size', min: 16, max: 34, step: 2, fmt: v => v + '% of a piece', apply: () => build(false) },
-  { k: 'board',     label: 'Space for the picture', min: 40, max: 75, step: 1, fmt: v => v + '% of the screen', apply: () => build(false) },
-  { k: 'sortZoom',  label: 'Piece size in Sort view', min: 1, max: 2.5, step: 0.1, fmt: v => (+v).toFixed(1) + '×', apply: () => { if (mode === 'sort') openView(); } },
+  { k: 'tab',       label: 'Tab size', min: 16, max: 34, step: 2, fmt: v => v + '% of a piece', apply: () => { rebuildGraphics(); afterChange(); } },
+  { k: 'cap',       label: 'Pieces out of the box at once', min: 30, max: 200, step: 10, fmt: v => v + ' pieces', apply: () => { computeTable(); afterChange(); } },
+  { k: 'sortSize',  label: 'Piece size in Sort view', min: 40, max: 140, step: 4, fmt: v => v + ' px', apply: () => { if (mode === 'sort') enterSort(); } },
 ];
 const TOGGLES = [
   { k: 'sound', label: 'Sound' },
   { k: 'vibrate', label: 'Vibration' },
   { k: 'glow', label: 'Glow' },
-  { k: 'outline', label: 'Piece outlines', apply: () => pieces.forEach(render) },
+  { k: 'outline', label: 'Piece outlines', apply: () => { rebuildGraphics(); afterChange(); } },
+  { k: 'sharp', label: 'Sharp graphics', apply: () => resizeCanvas() },
 ];
 
-/* ---------- State ---------- */
+/* =====================================================================
+   2. State
+   ===================================================================== */
 
-const $ = id => document.getElementById(id);
-const stage = $('stage'), frame = $('frame'), ghost = $('ghost'), tray = $('tray');
-const done = $('done'), empty = $('empty');
+const stage = $('stage'), view = $('view'), vctx = view.getContext('2d');
 const chipsEl = $('chips'), dockLabel = $('dockLabel');
 const hitCtx = document.createElement('canvas').getContext('2d');
 const DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
-const PILE_COLORS = ['#E9DCC4', '#F2C14E', '#7FC8E8', '#E8848C', '#9BD17A', '#C7A4F0', '#F0A35E'];
+const PILE_COLORS = ['#F2C14E', '#7FC8E8', '#E8848C', '#9BD17A', '#C7A4F0', '#F0A35E'];
 
-let img = makeDemoImage();
-let count = 24;
-let cut = null, geo = null;
-let pieces = [], grid = [], groups = [];
-let piles = [], viewing = 'unsorted', mode = 'puzzle';
+let img = null;          // the picture, already scaled down
+let P = null;            // puzzle geometry
+let pieces = [], grid = [];
+let items = [];          // every unplaced group, back to front
+let table = null;        // world rectangle pieces can lie in
+let boardCanvas = null;  // placed pieces are painted into this
+let piles = [], openPile = null, pileCount = 0;
+let mode = 'puzzle';
 let selected = new Set();
-let topZ = 10;
+let sortList = [], sortK = 1;
+let cam = { x: 0, y: 0, s: 1 };
+let peek = false;
+let colors = {};
 
-let pileCount = 0;
-// 'unsorted' is the puzzle box: it always exists. Other piles come and go.
-function freshPiles(){
-  pileCount = 0;
-  return [{ id: 'unsorted', color: null }];
+/* =====================================================================
+   3. Cutting (seeded, so a saved puzzle can be rebuilt exactly)
+   ===================================================================== */
+
+function rng(seed){
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
-
-/* ---------- 1. Cutting ---------- */
 
 function gridFor(n, aspect){
   const cols = Math.max(2, Math.round(Math.sqrt(n * aspect)));
@@ -236,227 +239,504 @@ function gridFor(n, aspect){
   return { cols, rows };
 }
 
-function cutPuzzle(image, n){
-  const { cols, rows } = gridFor(n, image.width / image.height);
-  const flip = () => Math.random() < 0.5 ? 1 : -1;
+function makePuzzle(seed, count, cols, rows){
+  const R = rng(seed), flip = () => R() < 0.5 ? 1 : -1;
   const h = Array.from({length: rows - 1}, () => Array.from({length: cols}, flip));
   const v = Array.from({length: rows}, () => Array.from({length: cols - 1}, flip));
-  const specs = [];
+  P = { seed, count, cols, rows, W: img.width, H: img.height };
+  P.pw = P.W / cols; P.ph = P.H / rows;
+  pieces = []; grid = Array.from({length: rows}, () => []);
   for (let r = 0; r < rows; r++){
     for (let c = 0; c < cols; c++){
-      specs.push({
-        r, c, order: Math.random(),
+      const p = {
+        i: r * cols + c, r, c, where: 'box', placed: false, touched: false, group: null,
         top:    r > 0        ? -h[r-1][c] : 0,
         right:  c < cols - 1 ?  v[r][c]   : 0,
         bottom: r < rows - 1 ?  h[r][c]   : 0,
         left:   c > 0        ? -v[r][c-1] : 0,
-      });
+        hx: (R() - .5) * 24, hy: (R() - .5) * 10, hr: (R() - .5) * 1.3,
+      };
+      pieces.push(p); grid[r][c] = p;
     }
   }
-  return { cols, rows, specs };
 }
 
-function edge(P, ax, ay, bx, by, s, T){
-  if (!s){ P.lineTo(bx, by); return; }
+const at = (r, c) => grid[r] ? grid[r][c] : undefined;
+const isEdge = p => !p.top || !p.right || !p.bottom || !p.left;
+
+// The table: the frame on top, and an area for loose pieces right underneath it,
+// the same width as the frame. New pieces only ever land in that area.
+let tray = null;
+function computeTable(){
+  const out = Math.min(S.cap, P.count) * 1.1;
+  const cell = (P.pw + 2 * P.pw * S.tab / 100) * (P.ph + 2 * P.ph * S.tab / 100);
+  const m = P.pw * S.tab / 100 + 4, gap = P.ph * 0.35;
+  const w = P.W + 2 * m;
+  const trayH = Math.max(P.ph * 2.5, out * cell * 1.35 / w);
+  tray = { x: -m, y: P.H + gap, w, h: trayH };
+  let x0 = -m, y0 = -m, x1 = x0 + w, y1 = tray.y + trayH + m;
+  // Never shrink the table out from under pieces already lying on it.
+  for (const g of items){
+    if (!isVisible(g)) continue;
+    const r = groupRect(g);
+    x0 = Math.min(x0, r.x); y0 = Math.min(y0, r.y); x1 = Math.max(x1, r.x + r.w); y1 = Math.max(y1, r.y + r.h);
+  }
+  table = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+
+/* =====================================================================
+   4. Graphics: piece shapes, sprite sheets, group images, the board
+   ===================================================================== */
+
+function edge(Pth, ax, ay, bx, by, s, T){
+  if (!s){ Pth.lineTo(bx, by); return; }
   const dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy);
   const nx = dy / L, ny = -dx / L;
   const pt = (t, n) => [ax + dx*t + nx*n*T*s, ay + dy*t + ny*n*T*s];
-  P.lineTo(...pt(0.35, 0));
-  P.bezierCurveTo(...pt(0.40, 0),    ...pt(0.42, 0.05), ...pt(0.40, 0.08));
-  P.bezierCurveTo(...pt(0.34, 0.16), ...pt(0.38, 0.26), ...pt(0.50, 0.26));
-  P.bezierCurveTo(...pt(0.62, 0.26), ...pt(0.66, 0.16), ...pt(0.60, 0.08));
-  P.bezierCurveTo(...pt(0.58, 0.05), ...pt(0.60, 0),    ...pt(0.65, 0));
-  P.lineTo(bx, by);
+  Pth.lineTo(...pt(0.35, 0));
+  Pth.bezierCurveTo(...pt(0.40, 0),    ...pt(0.42, 0.05), ...pt(0.40, 0.08));
+  Pth.bezierCurveTo(...pt(0.34, 0.16), ...pt(0.38, 0.26), ...pt(0.50, 0.26));
+  Pth.bezierCurveTo(...pt(0.62, 0.26), ...pt(0.66, 0.16), ...pt(0.60, 0.08));
+  Pth.bezierCurveTo(...pt(0.58, 0.05), ...pt(0.60, 0),    ...pt(0.65, 0));
+  Pth.lineTo(bx, by);
 }
 
+// Path in the piece's own sprite coordinates (the picture area starts at pad, pad).
 function piecePath(p){
-  const { pw, ph, pad, tabH } = geo, T = tabH / 0.26;
+  const { pw, ph, pad, tabH } = P, T = tabH / 0.26;
   const x0 = pad, y0 = pad, x1 = pad + pw, y1 = pad + ph;
-  const P = new Path2D();
-  P.moveTo(x0, y0);
-  edge(P, x0, y0, x1, y0, p.top, T);
-  edge(P, x1, y0, x1, y1, p.right, T);
-  edge(P, x1, y1, x0, y1, p.bottom, T);
-  edge(P, x0, y1, x0, y0, p.left, T);
-  P.closePath();
-  return P;
+  const Pth = new Path2D();
+  Pth.moveTo(x0, y0);
+  edge(Pth, x0, y0, x1, y0, p.top, T);
+  edge(Pth, x1, y0, x1, y1, p.right, T);
+  edge(Pth, x1, y1, x0, y1, p.bottom, T);
+  edge(Pth, x0, y1, x0, y0, p.left, T);
+  Pth.closePath();
+  return Pth;
 }
 
-const isEdge = p => !p.top || !p.right || !p.bottom || !p.left;
-
-/* ---------- 2. Layout and drawing ---------- */
-
-function layout(){
-  const W = stage.clientWidth, H = stage.clientHeight, wide = W > H, m = 16, share = S.board / 100;
-  const areaW = wide ? W * share : W, areaH = wide ? H : H * share;
-  const aspect = img.width / img.height;
-  let bw = areaW - 2*m, bh = bw / aspect;
-  if (bh > areaH - 2*m){ bh = areaH - 2*m; bw = bh * aspect; }
-  const bx = (areaW - bw) / 2, by = (areaH - bh) / 2;
-  const tr = wide ? { x: areaW, y: 8, w: W - areaW - 8, h: H - 16 }
-                  : { x: 8, y: areaH, w: W - 16, h: H - areaH - 8 };
-  const pw = bw / cut.cols, ph = bh / cut.rows;
-  const tabH = Math.min(pw, ph) * S.tab / 100;
-  const pad = Math.ceil(tabH) + 8;
-  return { W, H, bx, by, bw, bh, tray: tr, pw, ph, pad, tabH };
+// Copy the picture area under a piece (clipped by whatever clip is active).
+function drawImageRegion(ctx, x0, y0, w, h, dx, dy){
+  let sx = x0, sy = y0, ox = dx, oy = dy, sw = w, sh = h;
+  if (sx < 0){ ox -= sx; sw += sx; sx = 0; }
+  if (sy < 0){ oy -= sy; sh += sy; sy = 0; }
+  sw = Math.min(sw, P.W - sx); sh = Math.min(sh, P.H - sy);
+  if (sw > 0 && sh > 0) ctx.drawImage(img, sx, sy, sw, sh, ox, oy, sw, sh);
 }
 
-function render(p){
-  const { pw, ph, pad, bw, bh } = geo;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = pw + 2*pad, h = ph + 2*pad;
-  p.cv.width = Math.round(w * dpr); p.cv.height = Math.round(h * dpr);
-  p.cv.style.width = w + 'px'; p.cv.style.height = h + 'px';
-  const ctx = p.cv.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.save();
-  ctx.clip(p.path);
-  ctx.drawImage(img, pad - p.c*pw, pad - p.r*ph, bw, bh);
-  ctx.restore();
-  if (S.outline && !(p.group && p.group.placed)){
-    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.stroke(p.path);
-  }
-}
-
-function home(p){ return { x: geo.bx + p.c*geo.pw - geo.pad, y: geo.by + p.r*geo.ph - geo.pad }; }
-function absPos(p){ return { x: p.group.x + p.ox, y: p.group.y + p.oy }; }
-function at(r, c){ return grid[r] ? grid[r][c] : undefined; }
-const isSingle = g => g.pieces.length === 1 && !g.placed;
-const singlesIn = id => pieces.filter(p => isSingle(p.group) && p.where === id);
-
-/* ---------- 3. Groups ---------- */
-
-function setGroupPos(g, x, y, s = 1){
-  g.x = x; g.y = y; g.s = s;
-  g.el.style.transform = `translate(${x}px, ${y}px)` + (s !== 1 ? ` scale(${s})` : '');
-}
-
-function attach(g, p, ox, oy){
-  p.group = g; p.ox = ox; p.oy = oy;
-  p.cv.style.transform = `translate(${ox}px, ${oy}px)`;
-  g.el.appendChild(p.cv);
-  g.pieces.push(p);
-}
-
-function makeGroup(x, y, items, placed){
-  const el = document.createElement('div');
-  el.className = 'group' + (placed ? ' placed' : '');
-  el.addEventListener('animationend', () => el.classList.remove('join'));
-  const g = { el, x: 0, y: 0, s: 1, pieces: [], placed };
-  items.forEach(({p, ox, oy}) => attach(g, p, ox, oy));
-  setGroupPos(g, x, y);
-  el.style.zIndex = placed ? 1 : ++topZ;
-  stage.insertBefore(el, done);
-  groups.push(g);
-  return g;
-}
-
-function merge(a, b){
-  const q = b.pieces[0];
-  a.pieces.slice().forEach(p =>
-    attach(b, p, q.ox + (p.c - q.c) * geo.pw, q.oy + (p.r - q.r) * geo.ph));
-  a.el.remove();
-  groups = groups.filter(g => g !== a);
-  return b;
-}
-
-// In Puzzle view you see: the frame, anything on the table, and the one open pile.
-function isVisible(g){
-  if (mode === 'sort') return isSingle(g) && g.pieces[0].where === viewing;
-  return g.placed || g.pieces.length > 1 || g.pieces[0].where === 'table' || g.pieces[0].where === viewing;
-}
-
-function applyVisibility(){
-  groups.forEach(g => {
-    g.el.style.display = isVisible(g) ? '' : 'none';
-    g.el.classList.toggle('sel', mode === 'sort' && selected.has(g.pieces[0]));
+let sheets = [];
+function buildSprites(){
+  const sw = Math.ceil(P.pw + 2 * P.pad), sh = Math.ceil(P.ph + 2 * P.pad);
+  const SHEET = 2048;
+  const perRow = Math.max(1, Math.floor(SHEET / sw));
+  const perSheet = perRow * Math.max(1, Math.floor(SHEET / sh));
+  sheets = [];
+  const T = Math.min(P.pw, P.ph);
+  pieces.forEach((p, k) => {
+    const si = Math.floor(k / perSheet), j = k % perSheet;
+    if (!sheets[si]){
+      const n = Math.min(perSheet, pieces.length - si * perSheet);
+      const c = document.createElement('canvas');
+      c.width = Math.min(perRow, n) * sw; c.height = Math.ceil(n / perRow) * sh;
+      sheets[si] = c;
+    }
+    p.sp = { c: sheets[si], x: (j % perRow) * sw, y: Math.floor(j / perRow) * sh, w: sw, h: sh };
+    const ctx = sheets[si].getContext('2d');
+    ctx.save();
+    ctx.translate(p.sp.x, p.sp.y);
+    ctx.beginPath(); ctx.rect(0, 0, sw, sh); ctx.clip();
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = T * .05; ctx.shadowOffsetY = T * .02;
+    ctx.fillStyle = '#000'; ctx.fill(p.path);
+    ctx.restore();
+    ctx.save(); ctx.clip(p.path);
+    drawImageRegion(ctx, p.c * P.pw - P.pad, p.r * P.ph - P.pad, sw, sh, 0, 0);
+    ctx.restore();
+    if (S.outline){ ctx.lineWidth = Math.max(1, T * .015); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.stroke(p.path); }
+    ctx.restore();
   });
 }
 
-/* ---------- 4. Piles: tipping them out onto the table ---------- */
+// A joined group is drawn as one image, so 30 joined pieces cost the same as 1.
+function buildGroupImage(g){
+  if (g.pieces.length === 1){ g.sp = null; return; }
+  let minC = Infinity, maxC = -1, minR = Infinity, maxR = -1;
+  g.pieces.forEach(p => { minC = Math.min(minC, p.c); maxC = Math.max(maxC, p.c); minR = Math.min(minR, p.r); maxR = Math.max(maxR, p.r); });
+  const ox = minC * P.pw - P.pad, oy = minR * P.ph - P.pad;
+  const w = Math.ceil((maxC - minC + 1) * P.pw + 2 * P.pad), h = Math.ceil((maxR - minR + 1) * P.ph + 2 * P.pad);
+  const U = new Path2D();
+  g.pieces.forEach(p => U.addPath(p.path, new DOMMatrix([1, 0, 0, 1, p.c * P.pw - P.pad - ox, p.r * P.ph - P.pad - oy])));
+  const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
+  const t = tmp.getContext('2d');
+  t.save(); t.clip(U); drawImageRegion(t, ox, oy, w, h, 0, 0); t.restore();
+  const T = Math.min(P.pw, P.ph);
+  if (S.outline){ t.lineWidth = Math.max(1, T * .015); t.strokeStyle = 'rgba(255,255,255,.6)'; t.stroke(U); }
+  const out = document.createElement('canvas'); out.width = w; out.height = h;
+  const o = out.getContext('2d');
+  o.shadowColor = 'rgba(0,0,0,.45)'; o.shadowBlur = T * .05; o.shadowOffsetY = T * .02;
+  o.drawImage(tmp, 0, 0);
+  g.sp = { c: out, x: 0, y: 0, w, h };
+  g.ox = ox; g.oy = oy;
+  g.bbox = { minC, maxC, minR, maxR };
+}
+
+function paintPlaced(list){
+  const ctx = boardCanvas.getContext('2d');
+  list.forEach(p => {
+    const x = p.c * P.pw - P.pad, y = p.r * P.ph - P.pad;
+    ctx.save(); ctx.translate(x, y); ctx.clip(p.path);
+    drawImageRegion(ctx, x, y, p.sp.w, p.sp.h, 0, 0);
+    ctx.restore();
+  });
+}
+
+function rebuildGraphics(){
+  P.tabH = Math.min(P.pw, P.ph) * S.tab / 100;
+  P.pad = Math.ceil(P.tabH + Math.min(P.pw, P.ph) * .09 + 3);
+  pieces.forEach(p => p.path = piecePath(p));
+  buildSprites();
+  items.forEach(buildGroupImage);
+  boardCanvas = document.createElement('canvas');
+  boardCanvas.width = P.W; boardCanvas.height = P.H;
+  paintPlaced(pieces.filter(p => p.placed));
+  computeTable();
+  invalidate();
+}
+
+/* =====================================================================
+   5. Groups
+   ===================================================================== */
+
+// A group's position (gx, gy) is where the picture's top-left corner would be.
+// Every piece in it sits at (gx + c*pw, gy + r*ph). At (0, 0) it's home.
+function makeGroup(list, gx, gy){
+  const g = { pieces: list, gx, gy, sp: null };
+  list.forEach(p => p.group = g);
+  updateBBox(g);
+  return g;
+}
+function updateBBox(g){
+  let minC = Infinity, maxC = -1, minR = Infinity, maxR = -1;
+  g.pieces.forEach(p => { minC = Math.min(minC, p.c); maxC = Math.max(maxC, p.c); minR = Math.min(minR, p.r); maxR = Math.max(maxR, p.r); });
+  g.bbox = { minC, maxC, minR, maxR };
+}
+const isSingle = g => g.pieces.length === 1;
+
+function groupRect(g){
+  const b = g.bbox;
+  return { x: g.gx + b.minC * P.pw - P.pad, y: g.gy + b.minR * P.ph - P.pad,
+           w: (b.maxC - b.minC + 1) * P.pw + 2 * P.pad, h: (b.maxR - b.minR + 1) * P.ph + 2 * P.pad };
+}
+
+function isVisible(g){
+  if (!isSingle(g)) return true;
+  const w = g.pieces[0].where;
+  return w === 'table' || (openPile !== null && w === openPile);
+}
+
+function toFront(g){
+  const i = items.indexOf(g);
+  if (i >= 0){ items.splice(i, 1); items.push(g); }
+}
+
+function merge(a, b){
+  a.pieces.forEach(p => { p.group = b; b.pieces.push(p); });
+  b.pieces.forEach(p => p.where = 'table');
+  items.splice(items.indexOf(a), 1);
+  updateBBox(b);
+  buildGroupImage(b);
+  toFront(b);
+  return b;
+}
+
+/* =====================================================================
+   6. Camera
+   ===================================================================== */
+
+let VW = 0, VH = 0, dpr = 1;
+const cache = document.createElement('canvas'), cctx = cache.getContext('2d');
+
+function resizeCanvas(){
+  dpr = Math.min(window.devicePixelRatio || 1, S.sharp ? 2 : 1.25);
+  VW = stage.clientWidth; VH = stage.clientHeight;
+  for (const c of [view, cache]){ c.width = Math.round(VW * dpr); c.height = Math.round(VH * dpr); }
+  view.style.width = VW + 'px'; view.style.height = VH + 'px';
+  if (P){ computeTable(); clampCam(); if (mode === 'sort') enterSort(); }
+  invalidate();
+}
+
+const minScale = () => Math.min(VW / table.w, VH / table.h) * 0.9;
+const maxScale = () => Math.min(VW, VH) * 0.6 / Math.min(P.pw, P.ph);
+
+// Keep the view on the table: no scrolling off into empty space.
+// If the whole table fits on screen in one direction, centre it that way.
+function clampCam(){
+  cam.s = Math.min(Math.max(cam.s, minScale()), maxScale());
+  const vw = VW / cam.s, vh = VH / cam.s, pad = 12 / cam.s;
+  const x0 = table.x - pad, x1 = table.x + table.w + pad, y0 = table.y - pad, y1 = table.y + table.h + pad;
+  cam.x = vw >= x1 - x0 ? (x0 + x1 - vw) / 2 : Math.min(Math.max(cam.x, x0), x1 - vw);
+  cam.y = vh >= y1 - y0 ? (y0 + y1 - vh) / 2 : Math.min(Math.max(cam.y, y0), y1 - vh);
+}
+
+function fitTarget(){
+  const s = Math.min(VW / table.w, VH / table.h) * 0.98;
+  return { s, x: table.x + table.w / 2 - VW / (2 * s), y: table.y + table.h / 2 - VH / (2 * s) };
+}
+
+const toWorld = (sx, sy) => ({ x: cam.x + sx / cam.s, y: cam.y + sy / cam.s });
+
+function zoomTarget(sx, sy, s){
+  const w = toWorld(sx, sy);
+  s = Math.min(Math.max(s, minScale()), maxScale());
+  return { s, x: w.x - sx / s, y: w.y - sy / s };
+}
+
+let camAnim = null;
+function animateCam(to){
+  camAnim = { from: { ...cam }, to, t0: performance.now(), dur: 260 };
+  invalidate();
+}
+
+/* =====================================================================
+   7. Drawing
+   ===================================================================== */
+
+let drawQueued = false, cacheValid = false;
+const effects = [];
+
+function invalidate(){ cacheValid = false; requestDraw(); }
+function requestDraw(){ if (!drawQueued){ drawQueued = true; requestAnimationFrame(frame); } }
+
+function readColors(){
+  const cs = getComputedStyle(document.documentElement);
+  colors = { felt: cs.getPropertyValue('--felt').trim(), deep: cs.getPropertyValue('--felt-deep').trim() };
+  invalidate();
+}
+
+function worldTransform(ctx){
+  ctx.setTransform(dpr * cam.s, 0, 0, dpr * cam.s, -cam.x * cam.s * dpr, -cam.y * cam.s * dpr);
+}
+
+function drawGroup(ctx, g){
+  const p = g.pieces[0];
+  if (isSingle(g)){
+    const sp = p.sp;
+    ctx.drawImage(sp.c, sp.x, sp.y, sp.w, sp.h, g.gx + p.c * P.pw - P.pad, g.gy + p.r * P.ph - P.pad, sp.w, sp.h);
+  } else {
+    ctx.drawImage(g.sp.c, g.gx + g.ox, g.gy + g.oy);
+  }
+}
+
+function drawSortPiece(ctx, p){
+  const sp = p.sp;
+  ctx.drawImage(sp.c, sp.x, sp.y, sp.w, sp.h, p.sx, p.sy, sp.w * sortK, sp.h * sortK);
+  if (selected.has(p)){
+    ctx.save();
+    ctx.translate(p.sx, p.sy); ctx.scale(sortK, sortK);
+    ctx.lineWidth = 4 / sortK; ctx.strokeStyle = '#F2C14E'; ctx.stroke(p.path);
+    ctx.restore();
+  }
+}
+
+function drawScene(ctx, skip){
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = colors.felt; ctx.fillRect(0, 0, view.width, view.height);
+  if (!P) return;
+  if (mode === 'sort'){
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    for (const p of sortList) if (p !== skip) drawSortPiece(ctx, p);
+    return;
+  }
+  worldTransform(ctx);
+  ctx.fillStyle = 'rgba(0,0,0,.10)';
+  ctx.beginPath(); ctx.roundRect(tray.x, tray.y, tray.w, tray.h, Math.min(P.pw, P.ph) * .3); ctx.fill();
+  ctx.fillStyle = colors.deep; ctx.fillRect(0, 0, P.W, P.H);
+  if (peek){ ctx.globalAlpha = .3; ctx.drawImage(img, 0, 0); ctx.globalAlpha = 1; }
+  ctx.drawImage(boardCanvas, 0, 0);
+  const vx0 = cam.x, vy0 = cam.y, vx1 = cam.x + VW / cam.s, vy1 = cam.y + VH / cam.s;
+  for (const g of items){
+    if (g === skip || !isVisible(g)) continue;
+    const r = groupRect(g);
+    if (r.x > vx1 || r.y > vy1 || r.x + r.w < vx0 || r.y + r.h < vy0) continue;
+    drawGroup(ctx, g);
+  }
+}
+
+function frame(now){
+  drawQueued = false;
+  let more = false;
+
+  if (camAnim){
+    const k = Math.min(1, (now - camAnim.t0) / camAnim.dur), e = 1 - Math.pow(1 - k, 3);
+    for (const key of ['x', 'y', 's']) cam[key] = camAnim.from[key] + (camAnim.to[key] - camAnim.from[key]) * e;
+    cacheValid = false;
+    if (k >= 1){ camAnim = null; clampCam(); scheduleSave(); } else more = true;
+  }
+  if (drag && drag.moved && drag.edge && mode === 'puzzle' && now - drag.edgeT <= 300) more = true;
+  if (drag && drag.moved && drag.edge && mode === 'puzzle' && now - drag.edgeT > 300){
+    const step = 10 / cam.s, before = { x: cam.x, y: cam.y };
+    cam.x += drag.edge.x * step; cam.y += drag.edge.y * step; clampCam();
+    const dx = cam.x - before.x, dy = cam.y - before.y;
+    if (dx || dy){ drag.item.gx += dx; drag.item.gy += dy; cacheValid = false; more = true; }
+  }
+
+  const dragging = drag && drag.moved ? drag.item : null;
+  if (dragging){
+    if (!cacheValid){ drawScene(cctx, dragging); cacheValid = true; }
+    vctx.setTransform(1, 0, 0, 1, 0, 0);
+    vctx.drawImage(cache, 0, 0);
+    vctx.save();
+    if (mode === 'sort') vctx.setTransform(dpr, 0, 0, dpr, 0, 0); else worldTransform(vctx);
+    vctx.shadowColor = 'rgba(0,0,0,.35)'; vctx.shadowBlur = 14 * dpr; vctx.shadowOffsetY = 8 * dpr;
+    if (mode === 'sort') drawSortPiece(vctx, dragging); else drawGroup(vctx, dragging);
+    vctx.restore();
+  } else {
+    drawScene(vctx, null);
+  }
+
+  if (effects.length && mode === 'puzzle'){
+    worldTransform(vctx);
+    for (let i = effects.length - 1; i >= 0; i--){
+      const fx = effects[i], k = (now - fx.t0) / 700;
+      if (k >= 1){ effects.splice(i, 1); continue; }
+      vctx.strokeStyle = `rgba(242,193,78,${1 - k})`;
+      vctx.lineWidth = (3 + 6 * (1 - k)) / cam.s;
+      for (const p of fx.pieces){
+        vctx.save();
+        vctx.translate(fx.g.gx + p.c * P.pw - P.pad, fx.g.gy + p.r * P.ph - P.pad);
+        vctx.stroke(p.path);
+        vctx.restore();
+      }
+      more = true;
+    }
+  }
+  if (more) requestDraw();
+}
+
+/* =====================================================================
+   8. Feeding the table from the box, scattering, piles
+   ===================================================================== */
 
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const visibleSingles = () => pieces.filter(p => !p.placed && isSingle(p.group) && isVisible(p.group));
+const inPile = id => pieces.filter(p => !p.placed && isSingle(p.group) && p.where === id);
 
-function sortArea(){ return { x: 8, y: 8, w: geo.W - 16, h: geo.H - 16 }; }
-function viewScale(){ return mode === 'sort' ? geo.sortS : 1; }
-
-// Random spots with a little spacing ("best of 4 random tries"), so pieces
-// land in a messy heap but don't all bury each other.
-function scatterInto(list){
-  if (!list.length) return;
-  const s = viewScale(), area = mode === 'sort' ? sortArea() : geo.tray;
-  const w = geo.pw * s, h = geo.ph * s;
-  const rw = Math.max(0, area.w - w), rh = Math.max(0, area.h - h);
-  const pts = singlesIn(viewing).filter(p => !list.includes(p))
-    .map(p => ({ x: p.group.x + geo.pad * s, y: p.group.y + geo.pad * s }));
-  shuffle(list.slice()).forEach(p => {
+// Put pieces at random spots on the table, off the frame, not too bunched up.
+// nearView: prefer the part of the table you're looking at.
+function scatterOnTable(list, nearView){
+  let area = tray;
+  if (nearView){
+    const v = { x: cam.x, y: cam.y, w: VW / cam.s, h: VH / cam.s };
+    const x0 = Math.max(v.x, tray.x), y0 = Math.max(v.y, tray.y);
+    const x1 = Math.min(v.x + v.w, tray.x + tray.w), y1 = Math.min(v.y + v.h, tray.y + tray.h);
+    if (x1 - x0 > P.pw * 2 && y1 - y0 > P.ph * 2) area = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  }
+  const m = P.tabH;
+  const pts = visibleSingles().filter(p => !list.includes(p)).map(p => ({ x: p.group.gx + p.c * P.pw, y: p.group.gy + p.r * P.ph }));
+  const rw = Math.max(0, area.w - P.pw - 2 * m), rh = Math.max(0, area.h - P.ph - 2 * m);
+  const onBoard = (x, y) => x + P.pw + m > 0 && x - m < P.W && y + P.ph + m > 0 && y - m < P.H;
+  for (const p of list){
     let best = null, bd = -1;
-    for (let i = 0; i < 4; i++){
-      const x = area.x + Math.random() * rw, y = area.y + Math.random() * rh;
+    for (let i = 0, ok = 0; i < 30 && ok < 4; i++){
+      const x = area.x + m + Math.random() * rw, y = area.y + m + Math.random() * rh;
+      if (onBoard(x, y) && i < 29) continue;
+      ok++;
       let d = Infinity;
       for (const q of pts){ const dd = (q.x - x) ** 2 + (q.y - y) ** 2; if (dd < d) d = dd; }
       if (d > bd){ bd = d; best = { x, y }; }
     }
     pts.push(best);
-    setGroupPos(p.group, best.x - geo.pad * s, best.y - geo.pad * s, s);
-    p.group.el.style.zIndex = ++topZ;
-  });
-}
-
-function updateEmpty(){
-  const n = singlesIn(viewing).length;
-  empty.classList.toggle('show', n === 0);
-  if (n) return;
-  const r = mode === 'sort' ? { x: 16, y: 24, w: geo.W - 32 } : geo.tray;
-  Object.assign(empty.style, { left: r.x+'px', top: r.y+'px', width: r.w+'px' });
-  empty.textContent = mode === 'sort'
-    ? 'The puzzle box is empty.'
-    : 'The puzzle box is empty.';
-}
-
-// Open the current pile: tip all its pieces out, in the tray or full screen.
-function openView(){
-  if (mode === 'sort'){
-    const a = sortArea(), n = Math.max(1, singlesIn(viewing).length);
-    const fw = geo.pw + 2*geo.tabH + 8, fh = geo.ph + 2*geo.tabH + 8;
-    let s = Math.min(S.sortZoom, Math.sqrt(a.w * a.h * 0.7 / (n * fw * fh)));
-    geo.sortS = Math.max(1, Math.min(s, a.w / fw, a.h / fh));
-  } else {
-    const t = geo.tray;
-    Object.assign(tray.style, { left: t.x+'px', top: t.y+'px', width: t.w+'px', height: t.h+'px' });
+    p.group.gx = best.x - p.c * P.pw; p.group.gy = best.y - p.r * P.ph;
+    // Slip in at a random depth, so new pieces don't pop out on top.
+    const i = items.indexOf(p.group);
+    if (i >= 0){ items.splice(i, 1); items.splice(Math.floor(Math.random() * (items.length + 1)), 0, p.group); }
   }
-  applyVisibility();
-  scatterInto(singlesIn(viewing));
-  renderDock();
-  updateEmpty();
 }
 
-/* ---------- 5. The pile shelf ---------- */
+// Keep the table topped up to the limit, taking pieces from the box.
+function feed(exclude){
+  const need = S.cap - visibleSingles().length;
+  if (need <= 0) return 0;
+  const box = shuffle(inPile('box').filter(p => !exclude || !exclude.has(p))).slice(0, need);
+  box.forEach(p => p.where = 'table');
+  scatterOnTable(box, false);
+  return box.length;
+}
 
-function drawHeap(cv, list, plus){
-  const W = 92, H = 62, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+function prune(){
+  piles = piles.filter(pl => inPile(pl.id).length > 0);
+  if (openPile !== null && !piles.some(pl => pl.id === openPile)) openPile = null;
+}
+
+function moveToPile(list, id){
+  if (id === 'new'){
+    id = 'p' + Date.now();
+    piles.push({ id, color: PILE_COLORS[pileCount++ % PILE_COLORS.length] });
+  }
+  list.forEach(p => { p.where = id; p.touched = true; selected.delete(p); });
+  if (mode === 'puzzle' && id === openPile) scatterOnTable(list, true);
+  pulseHeap(id);
+  buzz(15); chime([880]);
+  afterChange();
+}
+
+// Swap some untouched table pieces for fresh ones from the box.
+function rummage(){
+  const loose = shuffle(pieces.filter(p => p.where === 'table' && !p.touched && isSingle(p.group) && !p.placed)).slice(0, 10);
+  if (!loose.length){ toast('Every piece on the table has been moved, so there’s nothing to swap.'); return; }
+  loose.forEach(p => p.where = 'box');
+  const n = feed(new Set(loose));
+  pulseHeap('box'); chime([440, 494]);
+  toast(n ? `Swapped ${n} pieces with the box.` : 'The box has no other pieces to swap.');
+  if (!n) loose.forEach(p => p.where = 'table');
+  afterChange();
+}
+
+function heapTap(id){
+  if (mode === 'sort' && selected.size){ moveToPile([...selected], id); return; }
+  if (id === 'new') return;
+  if (id === 'box'){ if (mode === 'puzzle') rummage(); return; }
+  if (openPile === id) openPile = null;
+  else {
+    openPile = id;
+    if (mode === 'puzzle') scatterOnTable(inPile(id), true);
+  }
+  if (mode === 'sort') enterSort();
+  afterChange();
+}
+
+/* =====================================================================
+   9. The pile shelf
+   ===================================================================== */
+
+function drawHeap(cv, list, kind){
+  const W = 92, H = 62, d = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * d; cv.height = H * d; cv.style.width = W + 'px'; cv.style.height = H + 'px';
   const ctx = cv.getContext('2d');
-  ctx.scale(dpr, dpr);
+  ctx.scale(d, d);
+  if (kind === 'box'){
+    ctx.fillStyle = '#7A5A3C'; ctx.beginPath(); ctx.roundRect(10, 30, 72, 30, 5); ctx.fill();
+    ctx.fillStyle = '#9C7650'; ctx.fillRect(10, 30, 72, 6);
+  }
   if (!list.length){
+    if (kind === 'box') return;
     ctx.strokeStyle = 'rgba(255,248,236,.45)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
     ctx.beginPath(); ctx.ellipse(W/2, H/2 + 4, 32, 20, 0, 0, Math.PI*2); ctx.stroke();
-    if (plus){
-      ctx.fillStyle = 'rgba(255,248,236,.85)'; ctx.font = '700 28px sans-serif';
+    if (kind === 'new'){
+      ctx.setLineDash([]); ctx.fillStyle = 'rgba(255,248,236,.85)'; ctx.font = '700 28px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('+', W/2, H/2 + 5);
     }
     return;
   }
-  const shown = list.slice().sort((a, b) => a.order - b.order)
-    .slice(0, Math.min(8, 2 + Math.ceil(list.length / 3)));
-  const k = 36 / Math.max(geo.pw, geo.ph);
-  const w = (geo.pw + 2*geo.pad) * k, h = (geo.ph + 2*geo.pad) * k;
+  const shown = list.slice().sort((a, b) => a.i - b.i).slice(0, Math.min(8, 2 + Math.ceil(list.length / 3)));
+  const k = 34 / Math.max(P.pw, P.ph);
+  const w = (P.pw + 2*P.pad) * k, h = (P.ph + 2*P.pad) * k;
+  const baseY = kind === 'box' ? H/2 - 2 : H/2 + 8;
   shown.forEach((p, i) => {
     ctx.save();
-    ctx.translate(W/2 + p.hx, H/2 + 8 + p.hy - i * 1.5);
+    ctx.translate(W/2 + p.hx, baseY + p.hy * .6 - i * 1.5);
     ctx.rotate(p.hr);
-    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1.5;
-    ctx.drawImage(p.cv, -w/2, -h/2, w, h);
+    ctx.drawImage(p.sp.c, p.sp.x, p.sp.y, p.sp.w, p.sp.h, -w/2, -h/2, w, h);
     ctx.restore();
   });
 }
@@ -466,16 +746,15 @@ function renderDock(){
   dockLabel.hidden = !moving;
   dockLabel.textContent = moving ? `Tap a pile to move ${n} piece${n > 1 ? 's' : ''}` : '';
   chipsEl.textContent = '';
-  const make = (id, color, list, open, label) => {
+  const make = (id, kind, color, list, open, label) => {
     const b = document.createElement('button');
-    b.className = 'heap';
-    b.dataset.id = id;
+    b.className = 'heap'; b.dataset.id = id;
     b.setAttribute('aria-pressed', !!open && !moving);
     b.setAttribute('aria-label', label);
     const cv = document.createElement('canvas');
-    drawHeap(cv, open ? [] : list, id === 'new');
+    drawHeap(cv, open ? [] : list, kind);
     b.appendChild(cv);
-    if (id !== 'new'){
+    if (kind !== 'new'){
       const tag = document.createElement('span'); tag.className = 'tag';
       if (color){ const dot = document.createElement('i'); dot.style.background = color; tag.appendChild(dot); }
       const num = document.createElement('b'); num.textContent = list.length; tag.appendChild(num);
@@ -484,125 +763,76 @@ function renderDock(){
     b.addEventListener('click', () => heapTap(id));
     chipsEl.appendChild(b);
   };
+  const box = inPile('box');
+  make('box', 'box', null, box, false, `Puzzle box, ${box.length} pieces. Tap to swap pieces.`);
   piles.forEach((pl, i) => {
-    const list = singlesIn(pl.id), open = pl.id === viewing;
-    const name = pl.id === 'unsorted' ? 'Puzzle box' : `Pile ${i}`;
-    make(pl.id, pl.color, list, open, `${name}, ${list.length} pieces${open ? ', open' : ''}`);
+    const list = inPile(pl.id), open = pl.id === openPile;
+    make(pl.id, 'pile', pl.color, list, open, `Pile ${i + 1}, ${list.length} pieces${open ? ', open' : ''}`);
   });
-  make('new', null, [], false, 'Drop pieces here to start a new pile');
+  make('new', 'new', null, [], false, 'Drop pieces here to start a new pile');
 }
 
-function heapEl(id){ return chipsEl.querySelector(`.heap[data-id="${id}"]`); }
 function pulseHeap(id){
-  const c = heapEl(id); if (!c) return;
-  c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse');
-}
-
-function heapTap(id){
-  if (mode === 'sort' && selected.size){ moveToPile([...selected], id); return; }
-  if (id === 'new' || id === viewing) return;
-  viewing = id;
-  selected.clear();
-  openView();
-}
-
-// Remove piles that have run out of pieces. The puzzle box always stays.
-function prune(){
-  piles = piles.filter(pl => pl.id === 'unsorted' || singlesIn(pl.id).length > 0);
-  if (!piles.some(pl => pl.id === viewing)){
-    viewing = 'unsorted';
-    selected.clear();
-    openView();
-  }
-}
-
-function moveToPile(list, id){
-  if (id === 'new'){
-    id = 'p' + Date.now();
-    piles.push({ id, color: PILE_COLORS[1 + (pileCount++ % (PILE_COLORS.length - 1))] });
-  }
-  const incoming = [];
-  list.forEach(p => { p.where = id; selected.delete(p); if (id === viewing) incoming.push(p); });
-  applyVisibility();
-  scatterInto(incoming);
-  prune();
-  renderDock();
-  updateEmpty();
-  pulseHeap(id);
-  if (S.vibrate && navigator.vibrate) navigator.vibrate(15);
-  chime([880]);
-}
-
-/* ---------- 6. Build or rebuild ---------- */
-
-function build(fresh){
-  let saved = null;
-  if (!fresh && geo){
-    saved = groups.map(g => ({
-      placed: g.placed, keys: g.pieces.map(p => [p.r, p.c, p.where]),
-      nx: (g.x + geo.pad) / geo.W, ny: (g.y + geo.pad) / geo.H,
-    }));
-  }
-  if (fresh){
-    cut = cutPuzzle(img, count);
-    piles = freshPiles(); viewing = 'unsorted';
-    setMode('puzzle', true);
-  }
-  selected.clear();
-  geo = layout();
-
-  Object.assign(frame.style, { left: geo.bx+'px', top: geo.by+'px', width: geo.bw+'px', height: geo.bh+'px' });
-  ghost.width = Math.round(geo.bw); ghost.height = Math.round(geo.bh);
-  ghost.getContext('2d').drawImage(img, 0, 0, ghost.width, ghost.height);
-
-  groups.forEach(g => g.el.remove());
-  groups = [];
-  grid = Array.from({length: cut.rows}, () => []);
-  pieces = cut.specs.map(s => {
-    const cv = document.createElement('canvas');
-    cv.className = 'piece';
-    const p = { ...s, cv, where: 'unsorted',
-      hx: (Math.random() - .5) * 24, hy: (Math.random() - .5) * 10, hr: (Math.random() - .5) * 1.3 };
-    cv._p = p;
-    p.path = piecePath(p);
-    grid[s.r][s.c] = p;
-    return p;
+  requestAnimationFrame(() => {
+    const c = chipsEl.querySelector(`.heap[data-id="${id}"]`); if (!c) return;
+    c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse');
   });
+}
+function heapAt(x, y){
+  const el = document.elementFromPoint(x, y);
+  return el ? el.closest('#chips .heap[data-id]') : null;
+}
 
-  const sets = saved || pieces.map(p => ({ placed: false, keys: [[p.r, p.c, 'unsorted']], nx: null }));
-  for (const s of sets){
-    const list = s.keys.map(([r, c, w]) => { const p = grid[r][c]; p.where = w; return p; });
-    const p0 = list[0];
-    const items = list.map(p => ({ p, ox: (p.c - p0.c) * geo.pw, oy: (p.r - p0.r) * geo.ph }));
-    let x = 0, y = 0;
-    if (s.placed){ const h = home(p0); x = h.x; y = h.y; }
-    else if (s.nx !== null){ x = s.nx * geo.W - geo.pad; y = s.ny * geo.H - geo.pad; }
-    makeGroup(x, y, items, s.placed);
+/* =====================================================================
+   10. Sort view
+   ===================================================================== */
+
+function sortSource(){ return openPile !== null ? inPile(openPile) : inPile('table'); }
+
+function scatterSort(list){
+  const sw = P.pad * 2 + P.pw, sh = P.pad * 2 + P.ph;
+  const w = sw * sortK, h = sh * sortK, rw = Math.max(0, VW - w), rh = Math.max(0, VH - h);
+  const pts = sortList.filter(p => !list.includes(p)).map(p => ({ x: p.sx, y: p.sy }));
+  for (const p of list){
+    let best = null, bd = -1;
+    for (let i = 0; i < 4; i++){
+      const x = Math.random() * rw, y = Math.random() * rh;
+      let d = Infinity;
+      for (const q of pts){ const dd = (q.x - x) ** 2 + (q.y - y) ** 2; if (dd < d) d = dd; }
+      if (d > bd){ bd = d; best = { x, y }; }
+    }
+    pts.push(best); p.sx = best.x; p.sy = best.y;
   }
-  pieces.forEach(render);
-
-  $('info').textContent = `Current puzzle: ${cut.cols * cut.rows} pieces (${cut.cols} × ${cut.rows}).`;
-  done.classList.toggle('show', groups.every(g => g.placed));
-  openView();
 }
 
-function setMode(m, quiet){
-  mode = m;
-  document.body.dataset.mode = m;
-  $('mPuzzle').setAttribute('aria-pressed', m === 'puzzle');
-  $('mSort').setAttribute('aria-pressed', m === 'sort');
-  selected.clear();
-  if (!quiet) openView();
+function enterSort(){
+  sortList = shuffle(sortSource());
+  const sw = P.pad * 2 + P.pw, sh = P.pad * 2 + P.ph, n = Math.max(1, sortList.length);
+  const fitK = Math.sqrt(VW * VH * 1.1 / (n * sw * sh));
+  sortK = Math.max(36 / Math.min(P.pw, P.ph), Math.min(S.sortSize / Math.min(P.pw, P.ph), fitK));
+  scatterSort(sortList);
+  invalidate();
 }
 
-/* ---------- 7. Feedback ---------- */
+// After a change: drop pieces that left the view, scatter ones that arrived.
+function refreshSort(){
+  const now = sortSource(), had = new Set(sortList);
+  const keep = sortList.filter(p => now.includes(p));
+  const fresh = now.filter(p => !had.has(p));
+  sortList = keep;
+  scatterSort(fresh);
+  sortList = keep.concat(fresh);
+}
+
+/* =====================================================================
+   11. Feedback
+   ===================================================================== */
 
 let actx = null;
 function ensureAudio(){
   if (!actx){ try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
   if (actx && actx.state === 'suspended') actx.resume();
 }
-
 function chime(notes){
   if (!actx || !S.sound) return;
   notes.forEach((f, i) => {
@@ -616,196 +846,448 @@ function chime(notes){
     o.start(t); o.stop(t + 0.35);
   });
 }
+function buzz(pattern){ if (S.vibrate && navigator.vibrate) navigator.vibrate(pattern); }
+function glow(g, list){ if (S.glow){ effects.push({ g: { gx: g.gx, gy: g.gy }, pieces: list.slice(), t0: performance.now() }); requestDraw(); } }
 
-function celebrate(g, kind){
-  if (S.glow){
-    g.el.classList.remove('join'); void g.el.offsetWidth; g.el.classList.add('join');
-  }
-  if (S.vibrate && navigator.vibrate) navigator.vibrate(kind === 'join' ? 25 : [20, 40, 20]);
-  chime(kind === 'join' ? [659.25] : [523.25, 783.99]);
+let toastTimer;
+function toast(text){
+  const t = $('toast'); t.textContent = text; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-/* ---------- 8. Touch: drag in both views, tap to select in Sort view ---------- */
+/* =====================================================================
+   12. After every change
+   ===================================================================== */
 
-let drag = null, hoverHeap = null;
-
-function pick(lx, ly){
-  const loose = groups.filter(g => !g.placed && g.el.style.display !== 'none')
-    .sort((a, b) => b.el.style.zIndex - a.el.style.zIndex);
-  return loose.find(g => g.pieces.some(p =>
-    hitCtx.isPointInPath(p.path, (lx - g.x) / g.s - p.ox, (ly - g.y) / g.s - p.oy))) || null;
-}
-
-function heapAt(x, y){
-  const el = document.elementFromPoint(x, y);
-  return el ? el.closest('#chips .heap[data-id]') : null;
-}
-
-function toggleSelect(p){
-  if (selected.has(p)) selected.delete(p); else selected.add(p);
-  p.group.el.classList.toggle('sel', selected.has(p));
+function afterChange(){
+  prune();
+  feed();
+  if (mode === 'sort') refreshSort();
   renderDock();
+  $('empty').classList.toggle('show', mode === 'sort' && sortList.length === 0);
+  const placed = pieces.filter(p => p.placed).length;
+  $('info').textContent = `This puzzle: ${pieces.length} pieces (${P.cols} × ${P.rows}), ${placed} in place.`;
+  document.querySelectorAll('#counts button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === P.count));
+  $('done').classList.toggle('show', mode === 'puzzle' && placed === pieces.length);
+  scheduleSave();
+  invalidate();
 }
 
-stage.addEventListener('pointerdown', e => {
+/* =====================================================================
+   13. Touch: drag pieces, pan, pinch zoom, double-tap
+   ===================================================================== */
+
+const pointers = new Map();
+let drag = null, pan = null, pinch = null, lastTap = { t: 0, x: 0, y: 0 };
+const local = e => { const r = view.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+
+function hitGroup(g, wx, wy, tol){
+  const r = groupRect(g);
+  if (wx < r.x - tol || wy < r.y - tol || wx > r.x + r.w + tol || wy > r.y + r.h + tol) return false;
+  for (const p of g.pieces){
+    const lx = wx - (g.gx + p.c * P.pw - P.pad), ly = wy - (g.gy + p.r * P.ph - P.pad);
+    if (tol){
+      if (lx > P.pad - tol && ly > P.pad - tol && lx < P.pad + P.pw + tol && ly < P.pad + P.ph + tol) return true;
+    } else if (hitCtx.isPointInPath(p.path, lx, ly)) return true;
+  }
+  return false;
+}
+
+function pickAt(pt){
+  if (mode === 'sort'){
+    for (const tol of [0, 14]){
+      for (let i = sortList.length - 1; i >= 0; i--){
+        const p = sortList[i], lx = (pt.x - p.sx) / sortK, ly = (pt.y - p.sy) / sortK;
+        if (tol){
+          const t = tol / sortK;
+          if (lx > P.pad - t && ly > P.pad - t && lx < P.pad + P.pw + t && ly < P.pad + P.ph + t) return p;
+        } else if (lx >= 0 && ly >= 0 && lx <= p.sp.w && ly <= p.sp.h && hitCtx.isPointInPath(p.path, lx, ly)) return p;
+      }
+    }
+    return null;
+  }
+  const w = toWorld(pt.x, pt.y);
+  for (const tol of [0, 14 / cam.s]){
+    for (let i = items.length - 1; i >= 0; i--){
+      const g = items[i];
+      if (isVisible(g) && hitGroup(g, w.x, w.y, tol)) return g;
+    }
+  }
+  return null;
+}
+
+function setHover(h){
+  const old = chipsEl.querySelector('.heap.target');
+  if (old && old !== h) old.classList.remove('target');
+  if (h) h.classList.add('target');
+}
+
+view.addEventListener('contextmenu', e => e.preventDefault());
+
+view.addEventListener('pointerdown', e => {
   ensureAudio();
-  if (drag) return;
-  const r = stage.getBoundingClientRect();
-  const lx = e.clientX - r.left, ly = e.clientY - r.top;
-  const g = pick(lx, ly);
-  if (!g) return;
-  const s = g.s, xs = g.pieces.map(p => p.ox), ys = g.pieces.map(p => p.oy);
-  drag = {
-    g, id: e.pointerId, r, ox: lx - g.x, oy: ly - g.y, sx: lx, sy: ly, moved: false,
-    minX: -(geo.pad + Math.min(...xs)) * s, maxX: geo.W - (geo.pw + geo.pad + Math.max(...xs)) * s,
-    minY: -(geo.pad + Math.min(...ys)) * s, maxY: geo.H - (geo.ph + geo.pad + Math.max(...ys)) * s,
-  };
-  g.el.style.zIndex = ++topZ;
-  stage.setPointerCapture(e.pointerId);
-});
+  if (!P) return;
+  view.setPointerCapture(e.pointerId);
+  const pt = local(e);
+  pointers.set(e.pointerId, pt);
 
-stage.addEventListener('pointermove', e => {
-  if (!drag || e.pointerId !== drag.id) return;
-  const d = drag, lx = e.clientX - d.r.left, ly = e.clientY - d.r.top;
-  if (!d.moved){
-    if (Math.hypot(lx - d.sx, ly - d.sy) < 8) return;
-    d.moved = true;
-    d.g.el.classList.add('lifted');
+  if (pointers.size === 2 && mode === 'puzzle'){
+    if (drag){ // second finger: stop dragging, start zooming
+      if (drag.moved){ drag.item.gx = drag.ox; drag.item.gy = drag.oy; }
+      drag = null; setHover(null);
+    }
+    pan = null; camAnim = null;
+    const [a, b] = [...pointers.values()];
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, s0: cam.s, w: toWorld(mid.x, mid.y) };
+    invalidate();
+    return;
   }
-  const x = Math.min(Math.max(lx - d.ox, d.minX), Math.max(d.minX, d.maxX));
-  const y = Math.min(Math.max(ly - d.oy, d.minY), Math.max(d.minY, d.maxY));
-  setGroupPos(d.g, x, y, d.g.s);
-  const h = d.g.pieces.length === 1 ? heapAt(e.clientX, e.clientY) : null;
-  if (h !== hoverHeap){
-    if (hoverHeap) hoverHeap.classList.remove('target');
-    hoverHeap = h;
-    if (h) h.classList.add('target');
+  if (pointers.size !== 1) return;
+
+  const hit = pickAt(pt);
+  if (hit){
+    drag = { item: hit, id: e.pointerId, start: pt, last: pt, moved: false };
+    if (mode === 'puzzle'){ drag.ox = hit.gx; drag.oy = hit.gy; toFront(hit); }
+    else { sortList.splice(sortList.indexOf(hit), 1); sortList.push(hit); }
+  } else if (mode === 'puzzle'){
+    camAnim = null;
+    pan = { id: e.pointerId, last: pt, start: pt, moved: false };
   }
 });
 
-function drop(e){
-  if (!drag || e.pointerId !== drag.id) return;
-  const d = drag; drag = null;
-  let g = d.g;
-  g.el.classList.remove('lifted');
-  if (hoverHeap){ hoverHeap.classList.remove('target'); hoverHeap = null; }
+view.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) return;
+  const pt = local(e);
+  pointers.set(e.pointerId, pt);
 
-  // A tap, not a drag.
-  if (!d.moved){
-    if (mode === 'sort') toggleSelect(g.pieces[0]);
+  if (pinch && pointers.size >= 2){
+    const [a, b] = [...pointers.values()];
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    cam.s = Math.min(Math.max(pinch.s0 * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0, minScale()), maxScale());
+    cam.x = pinch.w.x - mid.x / cam.s; cam.y = pinch.w.y - mid.y / cam.s;
+    clampCam(); invalidate();
     return;
   }
 
-  // Dropped on a pile: add it (and, in Sort view, everything selected with it).
-  const heap = g.pieces.length === 1 ? heapAt(e.clientX, e.clientY) : null;
-  if (heap){
-    const p = g.pieces[0];
-    const list = mode === 'sort' && selected.has(p) ? [...selected] : [p];
-    moveToPile(list, heap.dataset.id);
+  if (drag && drag.id === e.pointerId){
+    if (!drag.moved){
+      if (Math.hypot(pt.x - drag.start.x, pt.y - drag.start.y) < 7) return;
+      drag.moved = true; cacheValid = false;
+    }
+    const dx = pt.x - drag.last.x, dy = pt.y - drag.last.y;
+    drag.last = pt;
+    if (mode === 'puzzle'){
+      const g = drag.item;
+      g.gx += dx / cam.s; g.gy += dy / cam.s;
+      const r = groupRect(g), cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+      g.gx += Math.min(Math.max(cx, table.x), table.x + table.w) - cx;
+      g.gy += Math.min(Math.max(cy, table.y), table.y + table.h) - cy;
+      const E = 36;
+      drag.edge = { x: pt.x < E ? -1 : pt.x > VW - E ? 1 : 0, y: pt.y < E ? -1 : (pt.y > VH - E && pt.y <= VH) ? 1 : 0 };
+      if (!drag.edge.x && !drag.edge.y) drag.edge = null;
+      else if (!drag.edgeT) drag.edgeT = performance.now();
+      if (!drag.edge) drag.edgeT = 0;
+      if (drag.edge) requestDraw();
+    } else {
+      const p = drag.item, w = p.sp.w * sortK, h = p.sp.h * sortK;
+      p.sx = Math.min(Math.max(p.sx + dx, -w / 3), VW - w * 2 / 3);
+      p.sy = Math.min(Math.max(p.sy + dy, -h / 3), VH - h * 2 / 3);
+    }
+    const canPile = mode === 'sort' || isSingle(drag.item);
+    setHover(canPile ? heapAt(e.clientX, e.clientY) : null);
+    requestDraw();
     return;
   }
-  if (mode === 'sort') return;
 
-  const T = Math.min(geo.pw, geo.ph);
-  const snapFrame = Math.max(12, T * S.snapFrame / 100);
-  const snapJoin  = Math.max(12, T * S.snapJoin / 100);
+  if (pan && pan.id === e.pointerId){
+    if (!pan.moved && Math.hypot(pt.x - pan.start.x, pt.y - pan.start.y) < 7) return;
+    pan.moved = true;
+    cam.x -= (pt.x - pan.last.x) / cam.s; cam.y -= (pt.y - pan.last.y) / cam.s;
+    pan.last = pt;
+    clampCam(); invalidate();
+  }
+});
 
-  // Close to its spot in the frame: lock the whole group in place.
-  const nearHome = g.pieces.some(p => {
-    const a = absPos(p), h = home(p);
-    return Math.hypot(a.x - h.x, a.y - h.y) < snapFrame;
-  });
-  if (nearHome){
-    const p0 = g.pieces[0], h = home(p0);
-    setGroupPos(g, h.x - p0.ox, h.y - p0.oy);
-    g.placed = true;
-    g.pieces.forEach(p => { p.where = 'table'; render(p); });
-    g.el.classList.add('placed');
-    g.el.style.zIndex = 1;
-    celebrate(g, 'place');
-    prune(); renderDock(); updateEmpty();
-    if (groups.every(q => q.placed)){
-      done.classList.add('show');
-      setTimeout(() => chime([523.25, 659.25, 783.99, 1046.5]), 250);
+function pointerEnd(e){
+  if (!pointers.has(e.pointerId)) return;
+  const pt = local(e);
+  pointers.delete(e.pointerId);
+
+  if (pinch){
+    if (pointers.size < 2){
+      pinch = null;
+      if (pointers.size === 1){ // keep panning with the finger that's left
+        const [id, p] = [...pointers.entries()][0];
+        pan = { id, last: p, start: p, moved: true };
+      }
+      scheduleSave();
     }
     return;
   }
+  if (drag && drag.id === e.pointerId){ finishDrag(e, e.type === 'pointercancel'); return; }
+  if (pan && pan.id === e.pointerId){
+    if (!pan.moved && e.type === 'pointerup') handleTap(pt);
+    pan = null; scheduleSave();
+  }
+}
+view.addEventListener('pointerup', pointerEnd);
+view.addEventListener('pointercancel', pointerEnd);
 
-  // Close to a visible matching neighbour: join them.
+view.addEventListener('wheel', e => {
+  if (mode !== 'puzzle' || !P) return;
+  e.preventDefault();
+  const pt = local(e), t = zoomTarget(pt.x, pt.y, cam.s * Math.exp(-e.deltaY * 0.0015));
+  Object.assign(cam, t); clampCam(); invalidate(); scheduleSave();
+}, { passive: false });
+
+function handleTap(pt){
+  const now = performance.now();
+  if (now - lastTap.t < 320 && Math.hypot(pt.x - lastTap.x, pt.y - lastTap.y) < 30){
+    lastTap.t = 0;
+    const fit = fitTarget();
+    animateCam(cam.s > fit.s * 1.8 ? fit : zoomTarget(pt.x, pt.y, cam.s * 2.5));
+  } else lastTap = { t: now, x: pt.x, y: pt.y };
+}
+
+function finishDrag(e, cancelled){
+  const d = drag; drag = null;
+  setHover(null);
+  cacheValid = false;
+  if (!d.moved){
+    if (mode === 'sort' && !cancelled){
+      const p = d.item;
+      if (selected.has(p)) selected.delete(p); else selected.add(p);
+      renderDock();
+    }
+    requestDraw();
+    return;
+  }
+  const heap = cancelled ? null : heapAt(e.clientX, e.clientY);
+
+  if (mode === 'sort'){
+    if (heap){
+      const p = d.item;
+      moveToPile(selected.has(p) ? [...selected] : [p], heap.dataset.id);
+    } else requestDraw();
+    return;
+  }
+
+  let g = d.item;
+  if (heap && isSingle(g)){ moveToPile([g.pieces[0]], heap.dataset.id); return; }
+  g.pieces.forEach(p => p.touched = true);
+  if (cancelled){ afterChange(); return; }
+
+  const T = Math.min(P.pw, P.ph);
+  const snapFrame = Math.max(6, T * S.snapFrame / 100), snapJoin = Math.max(6, T * S.snapJoin / 100);
+
+  // Near its spot in the frame: lock it in.
+  if (Math.hypot(g.gx, g.gy) < snapFrame){
+    g.gx = 0; g.gy = 0;
+    g.pieces.forEach(p => { p.placed = true; p.where = 'placed'; });
+    paintPlaced(g.pieces);
+    items.splice(items.indexOf(g), 1);
+    glow(g, g.pieces); buzz([20, 40, 20]); chime([523.25, 783.99]);
+    if (pieces.every(p => p.placed)) setTimeout(() => chime([523.25, 659.25, 783.99, 1046.5]), 250);
+    afterChange();
+    return;
+  }
+
+  // Near a matching neighbour: join them.
   let joined = false, again = true;
   while (again){
     again = false;
-    for (const p of g.pieces){
+    outer: for (const p of g.pieces){
       for (const [dr, dc] of DIRS){
         const n = at(p.r + dr, p.c + dc);
-        if (!n || n.group === g || n.group.placed || !isVisible(n.group)) continue;
-        const a = absPos(p), b = absPos(n);
-        const tx = b.x - dc * geo.pw, ty = b.y - dr * geo.ph;
-        if (Math.hypot(a.x - tx, a.y - ty) < snapJoin){
-          setGroupPos(g, g.x + tx - a.x, g.y + ty - a.y);
-          g = merge(g, n.group);
+        if (!n || n.placed || n.group === g || !isVisible(n.group)) continue;
+        const h = n.group;
+        if (Math.hypot(g.gx - h.gx, g.gy - h.gy) < snapJoin){
+          g = merge(g, h);
           joined = again = true;
-          break;
+          break outer;
         }
       }
-      if (again) break;
     }
   }
-  if (joined){
-    g.pieces.forEach(p => p.where = 'table');
-    g.el.style.zIndex = ++topZ;
-    celebrate(g, 'join');
-  } else if (g.pieces.length === 1){
-    // Inside the tray: stays in the open pile. Elsewhere: it's on the table.
-    const t = geo.tray, cx = g.x + geo.pad + geo.pw / 2, cy = g.y + geo.pad + geo.ph / 2;
-    const inTray = cx >= t.x && cx <= t.x + t.w && cy >= t.y && cy <= t.y + t.h;
-    g.pieces[0].where = inTray ? viewing : 'table';
-  }
-  prune();
-  renderDock();
-  updateEmpty();
+  if (joined){ glow(g, g.pieces); buzz(25); chime([659.25]); }
+  else if (isSingle(g)) g.pieces[0].where = 'table';
+  afterChange();
 }
-stage.addEventListener('pointerup', drop);
-stage.addEventListener('pointercancel', drop);
 
-/* ---------- 9. Sort view buttons ---------- */
+/* =====================================================================
+   14. Saving and loading (IndexedDB, on this device only)
+   ===================================================================== */
 
-$('selEdges').addEventListener('click', () => {
-  singlesIn(viewing).filter(isEdge).forEach(p => selected.add(p));
-  applyVisibility(); renderDock();
-});
-$('selNone').addEventListener('click', () => { selected.clear(); applyVisibility(); renderDock(); });
-$('mix').addEventListener('click', () => { scatterInto(singlesIn(viewing)); chime([440, 494]); });
+const store = {
+  db: null,
+  async open(){
+    if (this.db) return this.db;
+    this.db = await new Promise((res, rej) => {
+      const r = indexedDB.open('jigsaw', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    return this.db;
+  },
+  async get(k){
+    const db = await this.open();
+    return new Promise((res, rej) => { const r = db.transaction('kv').objectStore('kv').get(k); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  },
+  async set(k, v){
+    const db = await this.open();
+    return new Promise((res, rej) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); });
+  },
+};
 
-/* ---------- 10. Header and settings ---------- */
+let saveTimer = null;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveState, 600); }
+
+function snapshot(){
+  const r2 = v => Math.round(v * 100) / 100;
+  return {
+    v: 2, seed: P.seed, count: P.count, cols: P.cols, rows: P.rows,
+    groups: items.map(g => ({ i: g.pieces.map(p => p.i), x: r2(g.gx), y: r2(g.gy) })),
+    where: pieces.map(p => p.where),
+    touched: pieces.filter(p => p.touched).map(p => p.i),
+    piles, openPile, pileCount,
+    cam: { x: r2(cam.x), y: r2(cam.y), s: cam.s },
+  };
+}
+async function saveState(){
+  clearTimeout(saveTimer);
+  if (!P) return;
+  try { await store.set('state', snapshot()); } catch (e) { console.warn('Could not save', e); }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
+window.addEventListener('pagehide', saveState);
+
+async function saveImage(){
+  try {
+    const blob = await new Promise(res => img.toBlob(res, 'image/jpeg', 0.9));
+    if (blob) await store.set('image', blob);
+  } catch (e) { console.warn('Could not save picture', e); }
+}
+
+async function blobToCanvas(blob){
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+  c.getContext('2d').drawImage(bmp, 0, 0);
+  if (bmp.close) bmp.close();
+  return c;
+}
+
+async function restore(){
+  const st = await store.get('state'), blob = await store.get('image');
+  if (!st || !blob || st.v !== 2) return false;
+  img = await blobToCanvas(blob);
+  makePuzzle(st.seed, st.count, st.cols, st.rows);
+  pieces.forEach(p => { p.where = st.where[p.i]; p.placed = p.where === 'placed'; });
+  st.touched.forEach(i => pieces[i].touched = true);
+  items = st.groups.map(gr => makeGroup(gr.i.map(i => pieces[i]), gr.x, gr.y));
+  piles = st.piles || []; openPile = st.openPile ?? null; pileCount = st.pileCount || 0;
+  rebuildGraphics();
+  cam = { ...st.cam };
+  clampCam();
+  return true;
+}
+
+/* =====================================================================
+   15. New puzzles
+   ===================================================================== */
+
+// Scale big photos down: plenty of detail, much less memory.
+function prepareImage(src){
+  const max = S.sharp ? 2048 : 1600;
+  const k = Math.min(1, max / Math.max(src.width, src.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(src.width * k); c.height = Math.round(src.height * k);
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  return c;
+}
+
+const puzzleStarted = () => P && pieces.some(p => p.touched || p.placed) && !pieces.every(p => p.placed);
+const confirmNew = () => !puzzleStarted() || confirm('Start a new puzzle? The one you’re working on will be lost.');
+
+async function newPuzzle(picture, count){
+  if (picture){ img = prepareImage(picture); saveImage(); }
+  const seed = (Math.random() * 4294967296) >>> 0;
+  const { cols, rows } = gridFor(count, img.width / img.height);
+  makePuzzle(seed, count, cols, rows);
+  items = pieces.map(p => makeGroup([p], 0, 0));
+  piles = []; openPile = null; pileCount = 0; selected.clear(); effects.length = 0;
+  peek = false; $('peek').setAttribute('aria-pressed', 'false');
+  rebuildGraphics();
+  Object.assign(cam, fitTarget());
+  setMode('puzzle', true);
+  afterChange();
+}
+
+/* =====================================================================
+   16. Controls
+   ===================================================================== */
+
+function setMode(m, quiet){
+  mode = m;
+  document.body.dataset.mode = m;
+  $('mPuzzle').setAttribute('aria-pressed', m === 'puzzle');
+  $('mSort').setAttribute('aria-pressed', m === 'sort');
+  selected.clear(); drag = null; pan = null; pinch = null; pointers.clear();
+  if (m === 'sort') enterSort();
+  if (!quiet) afterChange();
+}
 
 $('mPuzzle').addEventListener('click', () => setMode('puzzle'));
 $('mSort').addEventListener('click', () => setMode('sort'));
 
 $('peek').addEventListener('click', e => {
-  const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
-  e.currentTarget.setAttribute('aria-pressed', on);
-  frame.classList.toggle('peek', on);
+  peek = !peek; e.currentTarget.setAttribute('aria-pressed', peek); invalidate();
 });
+
+// Pull every edge piece out of the box too, so "edges first" works with 400 pieces.
+$('selEdges').addEventListener('click', () => {
+  if (openPile === null){
+    const fromBox = inPile('box').filter(isEdge);
+    fromBox.forEach(p => p.where = 'table');
+    scatterOnTable(fromBox, false);
+  }
+  afterChange();
+  sortList.filter(isEdge).forEach(p => selected.add(p));
+  renderDock(); invalidate();
+});
+$('selNone').addEventListener('click', () => { selected.clear(); renderDock(); invalidate(); });
+$('mix').addEventListener('click', () => { sortList = shuffle(sortList); scatterSort(sortList); chime([440, 494]); invalidate(); });
+
+const zoomBy = f => animateCam(zoomTarget(VW / 2, VH / 2, cam.s * f));
+$('zIn').addEventListener('click', () => zoomBy(1.6));
+$('zOut').addEventListener('click', () => zoomBy(1 / 1.6));
+$('zFit').addEventListener('click', () => animateCam(fitTarget()));
 
 const dlg = $('settings');
-$('openSettings').addEventListener('click', () => dlg.showModal());
+$('openSettings').addEventListener('click', () => { afterChange(); dlg.showModal(); });
 $('closeSettings').addEventListener('click', () => dlg.close());
 
-document.querySelectorAll('.sizes button').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.sizes button').forEach(x => x.setAttribute('aria-pressed', x === b));
-  count = +b.dataset.n;
-  build(true);
-  dlg.close();
+document.querySelectorAll('#counts button').forEach(b => b.addEventListener('click', () => {
+  if (!confirmNew()) return;
+  dlg.close(); newPuzzle(null, +b.dataset.n);
 }));
-
-$('file').addEventListener('change', e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  const i = new Image();
-  i.onload = () => { img = i; build(true); dlg.close(); };
-  i.src = URL.createObjectURL(f);
+$('sample').addEventListener('click', () => {
+  if (!confirmNew()) return;
+  dlg.close(); newPuzzle(makeDemoImage(), P ? P.count : 100);
 });
+$('file').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f || !confirmNew()) return;
+  dlg.close();
+  try {
+    const bmp = await createImageBitmap(f);
+    await newPuzzle(bmp, P ? P.count : 100);
+    if (bmp.close) bmp.close();
+  } catch (err) { toast('That picture couldn’t be opened.'); }
+});
+$('again').addEventListener('click', () => newPuzzle(null, P.count));
 
 function buildSettingsUI(){
   const box = $('sliders'); box.textContent = '';
@@ -817,7 +1299,7 @@ function buildSettingsUI(){
     const inp = document.createElement('input');
     Object.assign(inp, { type: 'range', id: 's-' + d.k, min: d.min, max: d.max, step: d.step, value: S[d.k] });
     inp.addEventListener('input', () => { S[d.k] = +inp.value; out.textContent = d.fmt(S[d.k]); saveSettings(); });
-    inp.addEventListener('change', () => { if (d.apply) d.apply(); });
+    inp.addEventListener('change', () => { if (d.apply && P) d.apply(); });
     wrap.append(lab, inp); box.appendChild(wrap);
   });
   const tb = $('toggles'); tb.textContent = '';
@@ -826,25 +1308,35 @@ function buildSettingsUI(){
     b.textContent = d.label; b.setAttribute('aria-pressed', S[d.k]);
     b.addEventListener('click', () => {
       S[d.k] = !S[d.k]; b.setAttribute('aria-pressed', S[d.k]); saveSettings();
-      if (d.apply) d.apply();
+      if (d.apply && P) d.apply();
     });
     tb.appendChild(b);
   });
 }
-
 $('reset').addEventListener('click', () => {
-  S = { ...DEFAULTS }; saveSettings(); buildSettingsUI(); build(false);
+  S = { ...DEFAULTS }; saveSettings(); buildSettingsUI();
+  if (P){ rebuildGraphics(); resizeCanvas(); afterChange(); }
 });
 
-$('again').addEventListener('click', () => build(true));
-
-let resizeTimer;
-window.addEventListener('resize', () => {
+// Resize whenever the play area changes size (rotation, or the pile shelf growing).
+let resizeTimer, lastSize = '';
+new ResizeObserver(() => {
+  const size = stage.clientWidth + 'x' + stage.clientHeight;
+  if (size === lastSize) return;
+  lastSize = size;
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => build(false), 200);
-});
+  resizeTimer = setTimeout(() => {
+    const refit = P && Math.abs(cam.s - fitTarget().s) < fitTarget().s * 0.05;
+    resizeCanvas();
+    if (refit) Object.assign(cam, fitTarget());
+    invalidate();
+  }, 100);
+}).observe(stage);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
 
-/* ---------- Demo picture ---------- */
+/* =====================================================================
+   17. Sample picture
+   ===================================================================== */
 
 function makeDemoImage(){
   const W = 1600, H = 1200, c = document.createElement('canvas');
@@ -883,11 +1375,21 @@ function makeDemoImage(){
   return c;
 }
 
-buildSettingsUI();
-build(true);
+/* =====================================================================
+   18. Start
+   ===================================================================== */
 
-// Offline support: lets the app open and run without internet after the first visit.
-if ('serviceWorker' in navigator){
+(async () => {
+  readColors();
+  buildSettingsUI();
+  resizeCanvas();
+  let ok = false;
+  try { ok = await restore(); } catch (e) { console.warn('No saved puzzle', e); }
+  if (ok){ setMode('puzzle', true); afterChange(); }
+  else await newPuzzle(makeDemoImage(), 100);
+})();
+
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.hostname.endsWith('claude.ai')){
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(err => console.warn('Offline mode unavailable:', err));
   });
