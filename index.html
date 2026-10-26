@@ -54,21 +54,56 @@ button[aria-pressed="true"]{background:var(--chip); color:var(--chip-ink); font-
 .icon svg{width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
 .icon[aria-pressed="true"]{background:var(--chip); color:var(--chip-ink)}
 .icon[hidden]{display:none}
+body[data-mode="sort"] .puzzle-only{display:none}
+body[data-screen="home"] .game{display:none !important}
+body[data-screen="game"] #home{display:none}
+
+/* Puzzle selection screen */
+#home{flex:1; display:flex; flex-direction:column; min-height:0; background:var(--shelf)}
+.homebar{background:var(--bar); display:flex; align-items:center; gap:10px; padding:10px 12px 10px 18px; box-shadow:0 2px 8px rgba(0,0,0,.35); position:relative; z-index:2}
+.homebar h1{margin:0; font-size:26px; flex:1}
+#cats{display:flex; gap:8px; overflow-x:auto; padding:12px; flex:none}
+#cats button{border-radius:24px; flex:none; background:var(--btn)}
+#cats button[aria-pressed="true"]{background:var(--chip)}
+#gridWrap{flex:1; overflow-y:auto; padding:0 12px 24px}
+#grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:900px; margin:0 auto}
+.card{display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; padding:0; gap:0; min-height:0; border-radius:14px; overflow:hidden; background:var(--bar); text-align:left; position:relative; font-weight:400}
+.card .thumb{display:block; aspect-ratio:4/3; width:100%; background:var(--slot) center/cover no-repeat}
+.card .name{padding:8px 10px 10px; font-size:16px; line-height:1.25}
+.card .badge{position:absolute; top:8px; left:8px; background:var(--chip); color:var(--chip-ink); font-weight:700; font-size:14px; padding:3px 9px; border-radius:10px}
+.card.add .thumb{display:flex; align-items:center; justify-content:center; font-size:46px; background:transparent; border:2px dashed rgba(255,248,236,.4); border-radius:14px 14px 0 0}
+.card.broken .thumb{opacity:.35}
+#homeMsg{text-align:center; opacity:.85; font-size:17px; max-width:600px; margin:16px auto}
+#pickImg{display:block; width:100%; max-height:38vh; object-fit:contain; border-radius:10px; background:var(--slot)}
+#pickResume{margin:10px 0}
+#pickResume[hidden]{display:none}
+#pickContinue{width:100%}
+#file{position:absolute; opacity:0; width:1px; height:1px}
+.card .new{position:absolute; top:8px; right:8px; background:var(--glow); color:#3A2A1C; font-weight:700; font-size:14px; padding:3px 9px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.35)}
+#cats button.hasnew::after{content:''; width:9px; height:9px; border-radius:50%; background:var(--glow); margin-left:2px}
+#refresh.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ #refresh.spin svg{animation:none} }
+
+#dockLabel{font-size:15px; opacity:.95; flex:none; align-self:center; white-space:normal; width:6.5em; line-height:1.25; padding-right:4px}
+#dockLabel[hidden]{display:none}
 
 #stage{position:relative; flex:1; overflow:hidden; background:var(--table)}
 #view{position:absolute; left:0; top:0; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none}
-#toast{
+#toast, .toast{
   position:absolute; left:50%; top:12px; transform:translateX(-50%);
   background:var(--panel); padding:10px 16px; border-radius:12px; font-size:17px;
   box-shadow:0 4px 14px rgba(0,0,0,.35); opacity:0; transition:opacity .25s; pointer-events:none; max-width:90%; text-align:center;
 }
-#toast.show{opacity:1}
+#toast.show, .toast.show{opacity:1}
+#home{position:relative}
+#homeToast{top:auto; bottom:24px}
 #done{position:absolute; left:0; right:0; top:0; display:none; align-items:flex-end; justify-content:center; padding:16px; pointer-events:none}
 #done.show{display:flex}
 #done div{pointer-events:auto; background:var(--panel); border-radius:16px; padding:14px 18px; display:flex; gap:16px; align-items:center; font-size:22px; font-weight:700; box-shadow:0 6px 20px rgba(0,0,0,.4)}
 
 /* Pile shelf */
-#dock{background:var(--shelf); display:flex; overflow-x:auto; padding:6px 8px 4px; scroll-snap-type:x proximity}
+#dock{background:var(--shelf); display:flex; gap:4px; overflow-x:auto; padding:6px 8px 4px; scroll-snap-type:x proximity}
 #chips{display:flex; gap:4px; align-items:flex-end; flex:none}
 .heap{background:transparent; flex-direction:column; gap:2px; padding:2px 4px 4px; min-height:0; border-radius:14px; flex:none; transition:transform .15s, background .15s; scroll-snap-align:start}
 .heap .tag{font-size:15px; display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border-radius:10px; background:rgba(0,0,0,.3)}
@@ -95,49 +130,54 @@ input[type=file]{position:absolute; opacity:0; width:1px; height:1px}
 @media (prefers-reduced-motion: reduce){ .heap.pulse{animation:none} #toast{transition:none} }
 </style>
 </head>
-<body>
-<header id="bar">
-  <button id="back" class="icon" aria-label="Back to puzzles" title="Back to puzzles" hidden>
+<body data-mode="puzzle" data-screen="home">
+<section id="home">
+  <header class="homebar">
+    <h1>Puzzles</h1>
+    <button id="refresh" class="icon" aria-label="Check for new puzzles" title="Check for new puzzles">
+      <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+    </button>
+    <button id="homeSettings" class="icon" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </header>
+  <nav id="cats" aria-label="Categories"></nav>
+  <div id="gridWrap"><div id="grid"></div><p id="homeMsg" hidden></p></div>
+  <input id="file" type="file" accept="image/*">
+  <div id="homeToast" class="toast" role="status"></div>
+</section>
+<header id="bar" class="game">
+  <button id="back" class="icon" aria-label="Back to puzzles" title="Back to puzzles">
     <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
   </button>
+  <button id="mode" class="icon" aria-label="Sorting mode" title="Sorting mode" aria-pressed="false">
+    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+  </button>
   <div class="spacer"></div>
-  <button id="peek" class="icon" aria-label="Peek at the picture" title="Peek at the picture" aria-pressed="false">
+  <button id="peek" class="icon puzzle-only" aria-label="Peek at the picture" title="Peek at the picture" aria-pressed="false">
     <svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
   </button>
   <button id="edges" class="icon" aria-label="Gather edge pieces into a pile" title="Gather edge pieces">
     <svg viewBox="0 0 24 24"><path d="M4 10V4h6M14 4h6v6M20 14v6h-6M10 20H4v-6"/></svg>
   </button>
-  <button id="fit" class="icon" aria-label="Show the whole board" title="Show the whole board">
+  <button id="fit" class="icon puzzle-only" aria-label="Show the whole board" title="Show the whole board">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21M8 11h6"/></svg>
   </button>
   <button id="openSettings" class="icon" aria-label="Settings" title="Settings">
     <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
   </button>
 </header>
-<main id="stage">
+<main id="stage" class="game">
   <canvas id="view"></canvas>
   <div id="toast" role="status"></div>
-  <div id="done"><div><span>You finished it!</span><button id="again">Play again</button></div></div>
+  <div id="done"><div><span>You finished it!</span><button id="doneHome">More puzzles</button></div></div>
 </main>
-<nav id="dock" aria-label="Piles"><div id="chips"></div></nav>
+<nav id="dock" class="game" aria-label="Piles"><span id="dockLabel" hidden></span><div id="chips"></div></nav>
 
 <dialog id="settings">
   <div class="sheet">
     <h2>Settings</h2>
-    <h3>New puzzle</h3>
     <p id="info"></p>
-    <div class="sizes">
-      <label class="btn">Choose photo<input id="file" type="file" accept="image/*"></label>
-      <button id="sample">Sample picture</button>
-    </div>
-    <p>Pieces:</p>
-    <div class="sizes" id="counts" role="group" aria-label="Number of pieces">
-      <button data-n="24">24</button>
-      <button data-n="48">48</button>
-      <button data-n="100">100</button>
-      <button data-n="200">200</button>
-      <button data-n="400">400</button>
-    </div>
     <h3>Pieces and snapping</h3>
     <div id="sliders"></div>
     <h3>Feedback and graphics</h3>
@@ -149,7 +189,26 @@ input[type=file]{position:absolute; opacity:0; width:1px; height:1px}
   </div>
 </dialog>
 
+<dialog id="pick">
+  <div class="sheet">
+    <img id="pickImg" alt="">
+    <h2 id="pickName"></h2>
+    <div id="pickResume"><button id="pickContinue" aria-pressed="true">Continue</button></div>
+    <p id="pickLabel">How many pieces?</p>
+    <div class="sizes" id="pickCounts" role="group" aria-label="Number of pieces">
+      <button data-n="24">24</button>
+      <button data-n="48">48</button>
+      <button data-n="100">100</button>
+      <button data-n="200">200</button>
+      <button data-n="400">400</button>
+    </div>
+    <div class="row"><span></span><button id="pickCancel">Cancel</button></div>
+  </div>
+</dialog>
+
+<!--EMBEDDED-->
 <script>
+
 'use strict';
 const $ = id => document.getElementById(id);
 
@@ -158,7 +217,7 @@ const $ = id => document.getElementById(id);
    ===================================================================== */
 
 const DEFAULTS = {
-  snapFrame: 30, snapJoin: 30, tab: 26, trayCount: 30, traySize: 64,
+  snapFrame: 30, snapJoin: 30, tab: 26, trayCount: 30, traySize: 64, sortSize: 88, lastCount: 100,
   sound: true, vibrate: true, glow: true, outline: false,
   sharp: !(navigator.deviceMemory && navigator.deviceMemory <= 4),
 };
@@ -172,6 +231,7 @@ function saveSettings(){ try { localStorage.setItem('jigsaw-settings', JSON.stri
 const SLIDERS = [
   { k: 'trayCount', label: 'Pieces out of the box', min: 10, max: 80, step: 5, fmt: v => v + ' pieces', apply: () => afterChange() },
   { k: 'traySize',  label: 'Piece size in the pieces area', min: 40, max: 120, step: 4, fmt: v => v + ' px', apply: () => { layoutTray(); invalidate(); } },
+  { k: 'sortSize',  label: 'Piece size when sorting', min: 48, max: 160, step: 4, fmt: v => v + ' px', apply: () => { layoutTray(); invalidate(); } },
   { k: 'snapFrame', label: 'Snap to the board', min: 10, max: 60, step: 5, fmt: v => v + '% of a piece' },
   { k: 'snapJoin',  label: 'Snap to other pieces', min: 10, max: 60, step: 5, fmt: v => v + '% of a piece' },
   { k: 'tab',       label: 'Tab size', min: 16, max: 34, step: 2, fmt: v => v + '% of a piece', apply: () => { rebuildGraphics(); afterChange(); } },
@@ -204,6 +264,8 @@ let trayList = [];            // pieces shown in the pieces area, back to front
 let trayK = 1;                // screen px per picture px in the pieces area
 let cam = { x: 0, y: 0, s: 1 };
 let peek = false, colors = {};
+let mode = 'puzzle';           // 'puzzle' or 'sort'
+let selected = new Set();       // pieces picked in sorting mode
 
 // Where a piece is ("where"):
 //   'box'    in the box, out of sight
@@ -430,15 +492,17 @@ let world = null;   // the board area in picture units: the picture plus a margi
 const cache = document.createElement('canvas'), cctx = cache.getContext('2d');
 
 function resizeCanvas(){
+  if (!stage.clientWidth || !stage.clientHeight) return;   // game screen hidden
   dpr = Math.min(window.devicePixelRatio || 1, S.sharp ? 2 : 1.25);
   VW = stage.clientWidth; VH = stage.clientHeight;
   for (const c of [view, cache]){ c.width = Math.round(VW * dpr); c.height = Math.round(VH * dpr); }
   view.style.width = VW + 'px'; view.style.height = VH + 'px';
-  const trayH = Math.round(Math.min(Math.max(VH * 0.34, 150), 380));
+  // Sorting mode: the board folds away and the pieces area takes the whole space.
+  const trayH = mode === 'sort' ? VH : Math.round(Math.min(Math.max(VH * 0.34, 150), 380));
   boardR = { x: 0, y: 0, w: VW, h: VH - trayH };
   trayR = { x: 0, y: VH - trayH, w: VW, h: trayH };
   $('done').style.height = boardR.h + 'px';
-  if (P){ clampCam(); layoutTray(); }
+  if (P){ if (boardR.h > 0) clampCam(); layoutTray(); }
   invalidate();
 }
 
@@ -489,7 +553,15 @@ function layoutTray(count){
   const n = Math.max(1, count ?? trayList.length);
   const fit = Math.sqrt(trayR.w * trayR.h * 0.95 / (n * P.sw * P.sh));
   const T = Math.min(P.pw, P.ph);
-  trayK = Math.max(34 / T, Math.min(S.traySize / T, fit));
+  const most = mode === 'sort' ? S.sortSize : S.traySize;
+  trayK = Math.max(34 / T, Math.min(most / T, fit));
+  // Keep every piece fully inside the area at the new size.
+  const hw = Math.min(.5, (P.pw / 2 + P.tabH + 4) * trayK / trayR.w), hh = Math.min(.5, (P.ph / 2 + P.tabH + 4) * trayK / trayR.h);
+  for (const p of trayList){
+    if (p.tx == null) continue;
+    p.tx = Math.min(Math.max(p.tx, hw), 1 - hw);
+    p.ty = Math.min(Math.max(p.ty, hh), 1 - hh);
+  }
 }
 
 // Top-left corner on screen of a piece's image in the pieces area.
@@ -518,6 +590,7 @@ function scatterTray(list){
 function refreshTray(){
   const now = shownPieces(), nowSet = new Set(now), had = new Set(trayList);
   trayList = trayList.filter(p => nowSet.has(p));
+  for (const p of [...selected]) if (!nowSet.has(p)) selected.delete(p);
   const fresh = now.filter(p => !had.has(p));
   const unplaced = fresh.filter(p => p.tx == null);
   trayList = trayList.concat(fresh.filter(p => p.tx != null));
@@ -555,6 +628,7 @@ function mixBox(){
 }
 
 function heapTap(id){
+  if (mode === 'sort' && selected.size){ toHeap([...selected], id); return; }
   if (id === 'new') return;
   if (id === 'box' && source === 'box'){ mixBox(); return; }
   setSource(id);
@@ -572,7 +646,7 @@ function toHeap(list, id, exclude){
     piles.push({ id, color: PILE_COLORS[pileCount++ % PILE_COLORS.length] });
   }
   list.forEach(p => {
-    p.tx = null;
+    p.tx = null; selected.delete(p);
     if (id === 'box'){ p.where = 'box'; p.touched = false; }
     else { p.where = id; p.touched = true; }
   });
@@ -623,6 +697,9 @@ function drawHeap(cv, list, kind){
 }
 
 function renderDock(){
+  const n = selected.size, label = $('dockLabel');
+  label.hidden = !(mode === 'sort' && n);
+  label.textContent = n ? `Tap a pile to move ${n} piece${n > 1 ? 's' : ''}` : '';
   chipsEl.textContent = '';
   const make = (id, kind, color, count, list, active, label) => {
     const b = document.createElement('button');
@@ -731,6 +808,11 @@ function drawScene(ctx, skip){
     if (p === skip) continue;
     const q = trayXY(p);
     drawTrayPiece(ctx, p, q.x, q.y, trayK);
+    if (selected.has(p)){
+      ctx.save(); ctx.translate(q.x, q.y); ctx.scale(trayK, trayK);
+      ctx.lineWidth = 4 / trayK; ctx.strokeStyle = '#F2C14E'; ctx.stroke(p.path);
+      ctx.restore();
+    }
   }
   ctx.restore();
   if (!trayList.length){
@@ -748,7 +830,12 @@ function drawDragged(ctx){
   else {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const k = inBoard(d.last) ? cam.s : trayK;
-    drawTrayPiece(ctx, d.item, d.last.x - d.gu * P.sw * k, d.last.y - d.gv * P.sh * k, k);
+    const x = d.last.x - d.gu * P.sw * k, y = d.last.y - d.gv * P.sh * k;
+    drawTrayPiece(ctx, d.item, x, y, k);
+    if (selected.has(d.item)){
+      ctx.shadowColor = 'transparent'; ctx.translate(x, y); ctx.scale(k, k);
+      ctx.lineWidth = 4 / k; ctx.strokeStyle = '#F2C14E'; ctx.stroke(d.item.path);
+    }
   }
   ctx.restore();
 }
@@ -823,7 +910,7 @@ function buzz(pattern){ if (S.vibrate && navigator.vibrate) navigator.vibrate(pa
 function glow(g){ if (S.glow){ effects.push({ gx: g.gx, gy: g.gy, pieces: g.pieces.slice(), t0: performance.now() }); requestDraw(); } }
 let toastTimer;
 function toast(text){
-  const t = $('toast'); t.textContent = text; t.classList.add('show');
+  const t = document.body.dataset.screen === 'home' ? $('homeToast') : $('toast'); t.textContent = text; t.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
@@ -838,8 +925,7 @@ function afterChange(){
   renderDock();
   const placed = pieces.filter(p => p.placed).length;
   $('info').textContent = `This puzzle: ${pieces.length} pieces (${P.cols} × ${P.rows}), ${placed} in place.`;
-  document.querySelectorAll('#counts button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === P.count));
-  $('done').classList.toggle('show', placed === pieces.length);
+  $('done').classList.toggle('show', mode === 'puzzle' && placed === pieces.length);
   scheduleSave();
   invalidate();
 }
@@ -981,6 +1067,10 @@ function pointerEnd(e){
     const d = drag; drag = null; setHover(null); cacheValid = false;
     if (!d.moved || e.type === 'pointercancel'){
       if (d.kind === 'board' && d.moved){ d.item.gx = d.ox; d.item.gy = d.oy; }
+      if (!d.moved && e.type === 'pointerup' && d.kind === 'tray' && mode === 'sort'){
+        if (selected.has(d.item)) selected.delete(d.item); else selected.add(d.item);
+        renderDock();
+      }
       invalidate(); return;
     }
     if (d.kind === 'tray') dropFromTray(d, pt, e); else dropFromBoard(d, pt, e);
@@ -1020,7 +1110,7 @@ function putInTray(p, cx, cy){
 
 function dropFromTray(d, pt, e){
   const p = d.item, heap = heapAt(e.clientX, e.clientY);
-  if (heap){ toHeap([p], heap.dataset.id); return; }
+  if (heap){ toHeap(mode === 'sort' && selected.has(p) ? [...selected] : [p], heap.dataset.id); return; }
   if (inBoard(pt)){
     const w = toWorld(pt.x, pt.y), g = p.group;
     g.gx = w.x - d.gu * P.sw - (p.c * P.pw - P.pad);
@@ -1108,11 +1198,13 @@ const store = {
 };
 
 let saveTimer = null;
+let current = null;        // the catalogue entry being played
+let progress = {};         // id -> { pct, done, count }
 function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveState, 600); }
 function snapshot(){
   const r2 = v => Math.round(v * 100) / 100, r3 = v => v == null ? null : Math.round(v * 1000) / 1000;
   return {
-    v: 3, seed: P.seed, count: P.count, cols: P.cols, rows: P.rows,
+    v: 4, seed: P.seed, count: P.count, cols: P.cols, rows: P.rows, W: P.W, H: P.H,
     groups: items.filter(onBoard).map(g => ({ i: g.pieces.map(p => p.i), x: r2(g.gx), y: r2(g.gy) })),
     where: pieces.map(p => p.where),
     tray: pieces.map(p => p.tx == null ? null : [r3(p.tx), r3(p.ty)]),
@@ -1123,30 +1215,26 @@ function snapshot(){
 }
 async function saveState(){
   clearTimeout(saveTimer);
-  if (!P) return;
-  try { await store.set('state', snapshot()); } catch (e) { console.warn('Could not save', e); }
+  if (!P || !current) return;
+  const placed = pieces.filter(p => p.placed).length;
+  progress[current.id] = { pct: Math.floor(placed / pieces.length * 100), done: placed === pieces.length, count: P.count };
+  try {
+    await store.set('state:' + current.id, snapshot());
+    await store.set('progress', progress);
+  } catch (e) { console.warn('Could not save', e); }
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
 window.addEventListener('pagehide', saveState);
 
-async function saveImage(){
-  try {
-    const blob = await new Promise(res => img.toBlob(res, 'image/jpeg', 0.9));
-    if (blob) await store.set('image', blob);
-  } catch (e) { console.warn('Could not save picture', e); }
-}
-async function blobToCanvas(blob){
-  const bmp = await createImageBitmap(blob);
-  const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
-  c.getContext('2d').drawImage(bmp, 0, 0);
+// Load a saved puzzle. The picture is redrawn at exactly the saved size,
+// so every saved piece position still lines up.
+async function restore(entry){
+  const st = await store.get('state:' + entry.id);
+  if (!st || st.v !== 4) return false;
+  const bmp = await loadBitmap(entry);
+  img = document.createElement('canvas'); img.width = st.W; img.height = st.H;
+  img.getContext('2d').drawImage(bmp, 0, 0, st.W, st.H);
   if (bmp.close) bmp.close();
-  return c;
-}
-
-async function restore(){
-  const st = await store.get('state'), blob = await store.get('image');
-  if (!st || !blob || st.v !== 3) return false;
-  img = await blobToCanvas(blob);
   makePuzzle(st.seed, st.count, st.cols, st.rows);
   pieces.forEach(p => {
     p.where = st.where[p.i]; p.placed = p.where === 'placed';
@@ -1157,10 +1245,12 @@ async function restore(){
   items = st.groups.map(gr => { gr.i.forEach(i => inGroup.add(i)); return makeGroup(gr.i.map(i => pieces[i]), gr.x, gr.y); });
   pieces.forEach(p => { if (!p.placed && !inGroup.has(p.i)) items.push(makeGroup([p], 0, 0)); });
   piles = st.piles || []; pileCount = st.pileCount || 0; source = st.source || 'box';
-  trayList = [];
+  trayList = []; effects.length = 0;
+  if (mode !== 'puzzle') setMode('puzzle', true);
   rebuildGraphics();
   cam = { ...st.cam };
   clampCam();
+  afterChange();
   return true;
 }
 
@@ -1176,17 +1266,15 @@ function prepareImage(src){
   c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
   return c;
 }
-const puzzleStarted = () => P && pieces.some(p => p.touched || p.placed) && !pieces.every(p => p.placed);
-const confirmNew = () => !puzzleStarted() || confirm('Start a new puzzle? The one you’re working on will be lost.');
-
 async function newPuzzle(picture, count){
-  if (picture){ img = prepareImage(picture); saveImage(); }
+  img = prepareImage(picture);
   const seed = (Math.random() * 4294967296) >>> 0;
   const { cols, rows } = gridFor(count, img.width / img.height);
   makePuzzle(seed, count, cols, rows);
   pieces.forEach(p => p.tx = null);
   items = pieces.map(p => makeGroup([p], 0, 0));
   piles = []; pileCount = 0; source = 'box'; trayList = []; effects.length = 0;
+  if (mode !== 'puzzle') setMode('puzzle', true);
   peek = false; $('peek').setAttribute('aria-pressed', 'false');
   rebuildGraphics();
   Object.assign(cam, fitTarget());
@@ -1197,30 +1285,26 @@ async function newPuzzle(picture, count){
    15. Controls
    ===================================================================== */
 
+function setMode(m, quiet){
+  mode = m;
+  document.body.dataset.mode = m;
+  const b = $('mode'), sorting = m === 'sort';
+  b.setAttribute('aria-pressed', sorting);
+  b.setAttribute('aria-label', sorting ? 'Back to puzzling' : 'Sorting mode');
+  b.title = b.getAttribute('aria-label');
+  selected.clear(); drag = null; pan = null; pinch = null; pointers.clear(); setHover(null);
+  resizeCanvas();
+  if (!quiet && P) afterChange();
+}
+$('mode').addEventListener('click', () => setMode(mode === 'sort' ? 'puzzle' : 'sort'));
+
 $('peek').addEventListener('click', e => { peek = !peek; e.currentTarget.setAttribute('aria-pressed', peek); invalidate(); });
 $('fit').addEventListener('click', () => animateCam(fitTarget()));
 
 const dlg = $('settings');
-$('openSettings').addEventListener('click', () => { afterChange(); dlg.showModal(); });
+$('openSettings').addEventListener('click', () => { if (P) afterChange(); dlg.showModal(); });
+$('homeSettings').addEventListener('click', () => dlg.showModal());
 $('closeSettings').addEventListener('click', () => dlg.close());
-document.querySelectorAll('#counts button').forEach(b => b.addEventListener('click', () => {
-  if (!confirmNew()) return;
-  dlg.close(); newPuzzle(null, +b.dataset.n);
-}));
-$('sample').addEventListener('click', () => {
-  if (!confirmNew()) return;
-  dlg.close(); newPuzzle(makeDemoImage(), P ? P.count : 100);
-});
-$('file').addEventListener('change', async e => {
-  const f = e.target.files[0];
-  e.target.value = '';
-  if (!f || !confirmNew()) return;
-  dlg.close();
-  try { const bmp = await createImageBitmap(f); await newPuzzle(bmp, P ? P.count : 100); if (bmp.close) bmp.close(); }
-  catch (err) { toast('That picture couldn’t be opened.'); }
-});
-$('again').addEventListener('click', () => newPuzzle(null, P.count));
-
 function buildSettingsUI(){
   const box = $('sliders'); box.textContent = '';
   SLIDERS.forEach(d => {
@@ -1254,7 +1338,7 @@ new ResizeObserver(() => {
   lastSize = size;
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    const refit = P && Math.abs(cam.s - fitTarget().s) < fitTarget().s * 0.05;
+    const refit = P && mode === 'puzzle' && boardR.h > 0 && Math.abs(cam.s - fitTarget().s) < fitTarget().s * 0.05;
     resizeCanvas();
     if (refit) Object.assign(cam, fitTarget());
     invalidate();
@@ -1263,46 +1347,245 @@ new ResizeObserver(() => {
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
 
 /* =====================================================================
-   16. Sample picture
+   16. The puzzle selection screen
    ===================================================================== */
 
-function makeDemoImage(){
-  const W = 1600, H = 1200, c = document.createElement('canvas');
-  c.width = W; c.height = H;
-  const g = c.getContext('2d');
-  const sky = g.createLinearGradient(0, 0, 0, H * 0.55);
-  sky.addColorStop(0, '#5FA8D9'); sky.addColorStop(1, '#F8D7A0');
-  g.fillStyle = sky; g.fillRect(0, 0, W, H);
-  g.fillStyle = '#FFE38A'; g.beginPath(); g.arc(1180, 300, 110, 0, Math.PI*2); g.fill();
-  const ridge = (base, amp, f, color, seed) => {
-    g.fillStyle = color; g.beginPath(); g.moveTo(0, H);
-    for (let x = 0; x <= W; x += 10){
-      const y = base - amp * (Math.sin(x*f + seed) * 0.6 + Math.sin(x*f*2.3 + seed*2) * 0.4);
-      g.lineTo(x, y);
+// puzzles.json lists the pictures by category:
+//   { "Landscapes": ["01 Lakeside village.jpg", ...], "Patterns": [...] }
+// Each picture lives in puzzles/<category>/<file>. Names come from the file
+// names: a number at the start only sets the order, and is hidden.
+const PHOTOS = 'My photos';
+let catalog = [], catFilter = 'All';
+let seen = null;             // ids of puzzles she has already been shown, for the "New" badge
+const niceName = f => f.replace(/\.[^.]+$/, '').replace(/^\d+[\s._-]*/, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim() || f;
+
+async function loadCatalog(){
+  let list = null, files = null, msg = '';
+  try {
+    const r = await fetch('puzzles.json?t=' + Date.now(), { cache: 'no-store' });
+    if (r.ok){
+      const text = await r.text();
+      try { list = JSON.parse(text); } catch (e) { msg = 'The puzzle list (puzzles.json) has a mistake in it, so only your own photos are shown.'; }
     }
-    g.lineTo(W, H); g.fill();
-  };
-  ridge(560, 140, 0.004, '#7E8FB8', 1);
-  ridge(640, 90, 0.006, '#4E7A6A', 3);
-  g.fillStyle = '#3F7FB0'; g.fillRect(0, 700, W, 160);
-  ridge(900, 50, 0.008, '#6BA34E', 5);
-  ridge(1000, 30, 0.01, '#4F8A3A', 7);
-  const house = (x, y, body, roof) => {
-    g.fillStyle = body; g.fillRect(x, y, 160, 120);
-    g.fillStyle = roof; g.beginPath(); g.moveTo(x-20, y); g.lineTo(x+80, y-80); g.lineTo(x+180, y); g.fill();
-    g.fillStyle = '#FFF4D6'; g.fillRect(x+25, y+35, 35, 35); g.fillRect(x+100, y+35, 35, 35);
-  };
-  house(300, 860, '#C8443A', '#3A3A3A');
-  house(560, 880, '#F2C14E', '#2F4A6A');
-  house(1100, 870, '#F4F0E6', '#B0402E');
-  const dots = ['#E8505B', '#FFFFFF', '#F2C14E', '#B07CE8'];
-  for (let i = 0; i < 260; i++){
-    g.fillStyle = dots[i % dots.length];
-    g.beginPath(); g.arc(Math.random()*W, 1020 + Math.random()*170, 6 + Math.random()*6, 0, Math.PI*2); g.fill();
+  } catch (e) {}
+  if (!list && !msg && window.EMBEDDED){ list = window.EMBEDDED.list; files = window.EMBEDDED.files; }
+  if (!list && !msg) msg = 'No puzzle list found. Add a puzzles.json file next to index.html.';
+  const out = [];
+  if (list && typeof list === 'object'){
+    for (const [cat, names] of Object.entries(list)){
+      if (!Array.isArray(names)) continue;
+      for (const f of names){
+        if (typeof f !== 'string' || !f.trim()) continue;
+        const path = `puzzles/${cat}/${f}`;
+        out.push({ id: 'cat:' + path, name: niceName(f), category: cat,
+                   url: files ? files[path] : path.split('/').map(encodeURIComponent).join('/') });
+      }
+    }
   }
-  return c;
+  let photos = [];
+  try { photos = (await store.get('photos')) || []; } catch (e) {}
+  photos.forEach(ph => out.push({ id: ph.id, name: ph.name, category: PHOTOS, photo: true }));
+  catalog = out;
+  const m = $('homeMsg'); m.hidden = !msg; m.textContent = msg;
 }
 
+async function loadBitmap(entry){
+  let blob;
+  if (entry.photo) blob = await store.get('image:' + entry.id);
+  else { const r = await fetch(entry.url); if (!r.ok) throw new Error('missing'); blob = await r.blob(); }
+  if (!blob) throw new Error('missing');
+  return createImageBitmap(blob);
+}
+
+// Thumbnails: made once from the full picture, then kept on the device.
+const thumbURL = {}, thumbFailed = new Set(), thumbQueue = [];
+let thumbBusy = 0;
+function applyThumb(id){
+  document.querySelectorAll('.card[data-id]').forEach(card => {
+    if (card.dataset.id !== id) return;
+    if (thumbURL[id]) card.querySelector('.thumb').style.backgroundImage = `url("${thumbURL[id]}")`;
+    card.classList.toggle('broken', thumbFailed.has(id));
+    if (thumbFailed.has(id)) card.querySelector('.name').textContent = 'Couldn’t load this picture';
+  });
+}
+function wantThumb(entry){
+  if (thumbURL[entry.id] || thumbFailed.has(entry.id)){ applyThumb(entry.id); return; }
+  if (!thumbQueue.includes(entry)) thumbQueue.push(entry);
+  pumpThumbs();
+}
+function pumpThumbs(){
+  while (thumbBusy < 2 && thumbQueue.length){
+    const entry = thumbQueue.shift();
+    thumbBusy++;
+    makeThumb(entry).then(url => {
+      if (url) thumbURL[entry.id] = url; else thumbFailed.add(entry.id);
+      applyThumb(entry.id);
+    }).finally(() => { thumbBusy--; pumpThumbs(); });
+  }
+}
+async function makeThumb(entry){
+  try {
+    let blob = await store.get('thumb:' + entry.id);
+    if (!blob){
+      const bmp = await loadBitmap(entry);
+      const k = Math.min(1, 480 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      if (bmp.close) bmp.close();
+      blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.82));
+      await store.set('thumb:' + entry.id, blob);
+    }
+    return URL.createObjectURL(blob);
+  } catch (e) { return null; }
+}
+
+function renderHome(){
+  const cats = ['All', ...new Set(catalog.map(e => e.category))];
+  if (!cats.includes(catFilter)) catFilter = 'All';
+  const nav = $('cats'); nav.textContent = '';
+  const isNew = e => !e.photo && seen && !seen.has(e.id);
+  cats.forEach(c => {
+    const b = document.createElement('button');
+    b.textContent = c; b.setAttribute('aria-pressed', c === catFilter);
+    if (catalog.some(e => isNew(e) && (c === 'All' || e.category === c))) b.classList.add('hasnew');
+    b.addEventListener('click', () => { catFilter = c; renderHome(); $('gridWrap').scrollTop = 0; });
+    nav.appendChild(b);
+  });
+  const grid = $('grid'); grid.textContent = '';
+  if (catFilter === 'All' || catFilter === PHOTOS){
+    const add = document.createElement('button');
+    add.className = 'card add';
+    add.innerHTML = '<span class="thumb" aria-hidden="true">+</span><span class="name">Your own photo</span>';
+    add.addEventListener('click', () => $('file').click());
+    grid.appendChild(add);
+  }
+  for (const entry of catalog){
+    if (catFilter !== 'All' && entry.category !== catFilter) continue;
+    const card = document.createElement('button');
+    card.className = 'card'; card.dataset.id = entry.id;
+    const thumb = document.createElement('span'); thumb.className = 'thumb';
+    const name = document.createElement('span'); name.className = 'name'; name.textContent = entry.name;
+    card.append(thumb, name);
+    const pr = progress[entry.id];
+    if (pr){
+      const badge = document.createElement('span'); badge.className = 'badge';
+      badge.textContent = pr.done ? 'Done' : `${pr.pct}%`;
+      card.appendChild(badge);
+    }
+    if (isNew(entry)){
+      const tag = document.createElement('span'); tag.className = 'new'; tag.textContent = 'New';
+      card.appendChild(tag);
+    }
+    card.setAttribute('aria-label', entry.name + (isNew(entry) ? ', new' : '') + (pr ? (pr.done ? ', finished' : `, ${pr.pct}% done`) : ''));
+    card.addEventListener('click', () => {
+      if (thumbFailed.has(entry.id)){ toast('That picture couldn’t be loaded.'); return; }
+      openPick(entry);
+    });
+    grid.appendChild(card);
+    wantThumb(entry);
+  }
+}
+
+// Choosing a puzzle: continue it, or pick how many pieces.
+const pickDlg = $('pick');
+let picking = null;
+function openPick(entry){
+  picking = entry;
+  if (seen && !seen.has(entry.id)){ seen.add(entry.id); store.set('seen', [...seen]).catch(() => {}); renderHome(); }
+  const pr = progress[entry.id], inProgress = pr && !pr.done;
+  $('pickImg').src = thumbURL[entry.id] || '';
+  $('pickName').textContent = entry.name;
+  $('pickResume').hidden = !inProgress;
+  if (inProgress) $('pickContinue').textContent = `Continue (${pr.pct}% done, ${pr.count} pieces)`;
+  $('pickLabel').textContent = inProgress ? 'Or start over with:' : 'How many pieces?';
+  document.querySelectorAll('#pickCounts button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === S.lastCount));
+  pickDlg.showModal();
+}
+$('pickCancel').addEventListener('click', () => pickDlg.close());
+$('pickContinue').addEventListener('click', () => { pickDlg.close(); playPuzzle(picking, null); });
+document.querySelectorAll('#pickCounts button').forEach(b => b.addEventListener('click', () => {
+  const pr = progress[picking.id];
+  if (pr && !pr.done && !confirm('Start over? Your progress on this puzzle will be lost.')) return;
+  S.lastCount = +b.dataset.n; saveSettings();
+  pickDlg.close();
+  playPuzzle(picking, S.lastCount);
+}));
+
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+
+// count = null means continue the saved puzzle.
+async function playPuzzle(entry, count){
+  document.body.dataset.screen = 'game';
+  await nextFrame();
+  resizeCanvas();
+  current = entry;
+  try {
+    if (count === null && await restore(entry)) return;
+    const bmp = await loadBitmap(entry);
+    await newPuzzle(bmp, count || S.lastCount);
+    if (bmp.close) bmp.close();
+    saveState();
+  } catch (e) {
+    console.warn(e);
+    toast('That picture couldn’t be loaded.');
+    goHome();
+  }
+}
+
+async function goHome(){
+  await saveState();
+  document.body.dataset.screen = 'home';
+  renderHome();
+  refreshCatalog(false);
+}
+
+// Look for new puzzles. Quietly when the app comes back to the screen,
+// or with a message when she taps the refresh button.
+let lastCheck = 0, checking = false;
+async function refreshCatalog(loud){
+  if (checking || (!loud && Date.now() - lastCheck < 30000)) return;
+  checking = true; lastCheck = Date.now();
+  const btn = $('refresh'); if (loud) btn.classList.add('spin');
+  const before = new Set(catalog.map(e => e.id));
+  try { await loadCatalog(); } catch (e) {}
+  const added = catalog.filter(e => !before.has(e.id) && !e.photo).length;
+  if (document.body.dataset.screen === 'home') renderHome();
+  btn.classList.remove('spin');
+  checking = false;
+  if (loud){
+    if (!navigator.onLine) toast('No internet connection right now, so new puzzles can’t be checked.');
+    else toast(added ? `${added} new puzzle${added > 1 ? 's' : ''}!` : 'No new puzzles right now.');
+  }
+}
+$('refresh').addEventListener('click', () => refreshCatalog(true));
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && document.body.dataset.screen === 'home') refreshCatalog(false);
+});
+$('back').addEventListener('click', goHome);
+$('doneHome').addEventListener('click', goHome);
+
+// Your own photo: kept on this device under "My photos".
+$('file').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  try {
+    const bmp = await createImageBitmap(f);
+    const c = prepareImage(bmp);
+    if (bmp.close) bmp.close();
+    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.9));
+    const id = 'photo:' + Date.now();
+    const entry = { id, name: niceName(f.name) || 'Photo', category: PHOTOS, photo: true };
+    await store.set('image:' + id, blob);
+    const photos = (await store.get('photos')) || [];
+    photos.push({ id, name: entry.name });
+    await store.set('photos', photos);
+    catalog.push(entry);
+    renderHome();
+    openPick(entry);
+  } catch (err) { toast('That picture couldn’t be opened.'); }
+});
 
 /* =====================================================================
    17. Start
@@ -1311,11 +1594,17 @@ function makeDemoImage(){
 (async () => {
   readColors();
   buildSettingsUI();
-  resizeCanvas();
-  let ok = false;
-  try { ok = await restore(); } catch (e) { console.warn('No saved puzzle', e); }
-  if (ok) afterChange();
-  else await newPuzzle(makeDemoImage(), 100);
+  try { progress = (await store.get('progress')) || {}; } catch (e) {}
+  await loadCatalog();
+  let saved = null;
+  try { saved = await store.get('seen'); } catch (e) {}
+  if (saved) seen = new Set(saved);
+  else {   // first time: nothing is "new" yet
+    seen = new Set(catalog.map(e => e.id));
+    store.set('seen', [...seen]).catch(() => {});
+  }
+  lastCheck = Date.now();
+  renderHome();
 })();
 
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !location.hostname.endsWith('claude.ai')){
