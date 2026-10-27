@@ -1,4 +1,4 @@
-# Jigsaw (web app)
+# Púsla (web app)
 
 ## Adding puzzles
 1. Put the picture in a folder inside `puzzles/`. The folder name becomes the
@@ -33,7 +33,7 @@ thumbnail stays on devices that have already seen it. Use a new file name.
 Open the link in Chrome → ⋮ menu → "Install app". Open it once while online.
 
 ## Publishing an update to the app itself
-Upload the changed files, and in `sw.js` change `jigsaw-v7` to the next number.
+Upload the changed files, and in `sw.js` change `pusla-v9` to the next number.
 New puzzles don't need this step: the puzzle list is always checked first.
 
 ## Offline
